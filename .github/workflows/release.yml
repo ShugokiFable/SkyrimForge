@@ -28,6 +28,7 @@ jobs:
           VERSION=$(python -c "from skyrim_forge.version import VERSION; print(VERSION)")
           test "$GITHUB_REF_NAME" = "v$VERSION"
           test "$(go env GOVERSION)" = "go1.23.2"
+          chmod +x writer/published/linux-x64/SkyrimForge.Native skyrim_forge/bin/linux-x64/SkyrimForge.Native
       - name: Full publication validation
         run: python scripts/validate_repository.py --scope full --write-reports
       - name: Build release assets

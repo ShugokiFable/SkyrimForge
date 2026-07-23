@@ -87,14 +87,14 @@ jobs:
           python --version
           test "$(go env GOVERSION)" = "go1.23.2"
       - name: Full publication validation
-        run: python scripts/validate_repository.py --scope full
+        run: |
+          chmod +x writer/published/linux-x64/SkyrimForge.Native skyrim_forge/bin/linux-x64/SkyrimForge.Native
+          python scripts/validate_repository.py --scope full
 
   windows-installer:
     name: Windows installer and legacy migration
     runs-on: windows-latest
     timeout-minutes: 15
-    env:
-      SKYRIM_FORGE_CONFIG: ${{ runner.temp }}/skyrim-forge/config.toml
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -103,12 +103,14 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-      - name: Select setup-python interpreter
+      - name: Select setup-python interpreter and config path
         shell: powershell
         run: |
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-          [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_PYTHON=${{ steps.python.outputs.python-path }}`n", $utf8NoBom)
-          & "${{ steps.python.outputs.python-path }}" --version
+          $configPath = Join-Path $env:RUNNER_TEMP 'skyrim-forge\config.toml'
+          [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_PYTHON=$($env:pythonLocation)\python.exe`n", $utf8NoBom)
+          [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_CONFIG=$configPath`n", $utf8NoBom)
+          & "$env:pythonLocation\python.exe" --version
       - name: Parse PowerShell scripts
         shell: powershell
         run: |
