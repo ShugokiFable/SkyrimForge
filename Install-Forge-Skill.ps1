@@ -16,5 +16,5 @@ foreach($Name in $Selected){
  $Stage=Join-Path $Skills ('.skyrim-forge.stage-'+[Guid]::NewGuid().ToString('N'))
  try{Copy-Item -LiteralPath $Source -Destination $Stage -Recurse; if(Test-Path $Target){Remove-Item $Target -Recurse -Force}; Move-Item $Stage $Target}
  finally{Remove-Item $Stage -Recurse -Force -ErrorAction SilentlyContinue}
- Write-Host "$Name: $Target" -ForegroundColor Green
+ Write-Host ("{0}: {1}" -f $Name, $Target) -ForegroundColor Green
 }
