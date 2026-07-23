@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -24,26 +24,35 @@ jobs:
           go-version: "1.23.2"
           cache: false
       - name: Verify tag and toolchain
+        shell: powershell
         run: |
-          VERSION=$(python -c "from skyrim_forge.version import VERSION; print(VERSION)")
-          test "$GITHUB_REF_NAME" = "v$VERSION"
-          test "$(go env GOVERSION)" = "go1.23.2"
-          chmod +x writer/published/linux-x64/SkyrimForge.Native skyrim_forge/bin/linux-x64/SkyrimForge.Native
-      - name: Full publication validation
+          $version = python -c "from skyrim_forge.version import VERSION; print(VERSION)"
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw "Tag $($env:GITHUB_REF_NAME) does not match package version v$version" }
+          $goVersion = (go env GOVERSION).Trim()
+          if ($goVersion -ne "go1.23.2") { throw "Unexpected Go version: $goVersion" }
+      - name: Full Windows publication validation
+        shell: powershell
         run: python scripts/validate_repository.py --scope full --write-reports
       - name: Build release assets
+        shell: powershell
         run: |
-          mkdir -p dist
-          python scripts/build_release_archive.py "dist/Skyrim-Forge-${GITHUB_REF_NAME#v}.zip"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $ver = $env:GITHUB_REF_NAME.TrimStart('v')
+          python scripts/build_release_archive.py "dist/Skyrim-Forge-$ver.zip"
           python -c "import forge_build_backend; forge_build_backend.build_wheel('dist'); forge_build_backend.build_sdist('dist')"
-          cp VALIDATION.json BUILD-RECEIPT.json MANIFEST.json SBOM.spdx.json dist/
-          (cd dist && sha256sum * > SHA256SUMS.txt)
+          Copy-Item VALIDATION.json, BUILD-RECEIPT.json, MANIFEST.json, SBOM.spdx.json dist/
+          Get-ChildItem dist -File | Get-FileHash -Algorithm SHA256 | ForEach-Object {
+            "{0}  {1}" -f $_.Hash.ToLowerInvariant(), $_.Path.Substring((Resolve-Path dist).Path.Length + 1)
+          } | Set-Content -Encoding ascii dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-assets
           path: dist/
           if-no-files-found: error
       - name: Publish release
+        shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes
+        run: |
+          $assets = Get-ChildItem dist -File | ForEach-Object { $_.FullName }
+          gh release create $env:GITHUB_REF_NAME @assets --verify-tag --generate-notes

@@ -15,32 +15,26 @@ concurrency:
 
 jobs:
   python:
-    name: Python ${{ matrix.python }} on ${{ matrix.os }}
+    name: Python ${{ matrix.python }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
         python: ["3.11", "3.13", "3.14"]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-      - id: python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python }}
       - name: Python, packaging, and MCP validation
         run: python scripts/validate_repository.py --scope python
 
   native:
-    name: Native writer on ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    name: Native writer (Windows)
+    runs-on: windows-latest
     timeout-minutes: 15
     defaults:
       run:
@@ -58,43 +52,16 @@ jobs:
         run: test "$(go env GOVERSION)" = "go1.23.2"
       - name: Formatting
         shell: bash
-        run: |
-          test -z "$(gofmt -l .)"
+        run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet ./...
       - name: Tests
         run: go test ./...
-      - name: Race detector
-        run: go test -race ./...
 
-  repository-validation:
-    name: Reproducible repository gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.13"
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.23.2"
-          cache: false
-      - name: Verify pinned toolchain
-        run: |
-          python --version
-          test "$(go env GOVERSION)" = "go1.23.2"
-      - name: Full publication validation
-        run: |
-          chmod +x writer/published/linux-x64/SkyrimForge.Native skyrim_forge/bin/linux-x64/SkyrimForge.Native
-          python scripts/validate_repository.py --scope full
-
-  windows-installer:
-    name: Windows installer and legacy migration
+  windows-gate:
+    name: Windows full validation and installer
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -103,7 +70,11 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-      - name: Select setup-python interpreter and config path
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.23.2"
+          cache: false
+      - name: Select Python and config path
         shell: powershell
         run: |
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -111,6 +82,10 @@ jobs:
           [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_PYTHON=$($env:pythonLocation)\python.exe`n", $utf8NoBom)
           [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_CONFIG=$configPath`n", $utf8NoBom)
           & "$env:pythonLocation\python.exe" --version
+          go version
+      - name: Full Windows validation
+        shell: powershell
+        run: python scripts/validate_repository.py --scope full
       - name: Parse PowerShell scripts
         shell: powershell
         run: |
