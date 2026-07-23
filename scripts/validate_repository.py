@@ -119,7 +119,7 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         env={"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}
         a=td/"windows-a.exe"; b=td/"windows-b.exe"
         for output in (a,b):
-            result=run(["go","build","-trimpath","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
+            result=run(["go","build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
             if result["returncode"]: errors.append("windows native build failed")
         if a.exists() and b.exists():
             bundled=ROOT/"writer"/"published"/"win-x64"/"SkyrimForge.Native.exe"
