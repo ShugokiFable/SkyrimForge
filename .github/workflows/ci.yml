@@ -1,0 +1,90 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  python:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13", "3.14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with: {python-version: "${{ matrix.python }}"}
+      - run: python -m compileall -q skyrim_forge tests scripts
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/validate_repository.py
+  native:
+    strategy:
+      matrix: {os: [ubuntu-latest, windows-latest]}
+    runs-on: ${{ matrix.os }}
+    defaults: {run: {working-directory: writer/native-go}}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {persist-credentials: false}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version-file: writer/native-go/go.mod, cache: false}
+      - shell: bash
+        run: |
+          gofmt -w .
+          git diff --exit-code
+      - run: go vet ./...
+      - run: go test ./...
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with: {python-version: "3.13"}
+      - name: Parse PowerShell scripts
+        shell: powershell
+        run: |
+          $failed=$false
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $t=$null;$e=$null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e)|Out-Null
+            if($e.Count){$failed=$true;$e|ForEach-Object{Write-Error $_.Message}}
+          }
+          if($failed){exit 1}
+      - name: Reproduce legacy Papyrus config upgrade
+        shell: powershell
+        run: |
+          $configRoot = Join-Path $HOME '.skyrim-forge'
+          New-Item -ItemType Directory -Force -Path $configRoot | Out-Null
+          $workspace = (Join-Path $env:RUNNER_TEMP 'Forge Workspaces').Replace('\','/')
+          $legacy = @"
+          [paths]
+          workspace_root = "$workspace"
+          skyrim_data = ""
+
+          [papyrus]
+          compiler = "C:/Legacy/PapyrusCompiler.exe"
+          flags = "C:/Legacy/TESV_Papyrus_Flags.flg"
+          imports = ["C:/Legacy/Source"]
+
+          [safety]
+          allow_external_processes = false
+          require_approval_for_writes = true
+          "@
+          Set-Content -LiteralPath (Join-Path $configRoot 'config.toml') -Value $legacy -Encoding UTF8
+      - name: Install twice, migrate config, and run native helper
+        shell: powershell
+        run: |
+          ./Install-or-Update.ps1
+          $backup = Join-Path $HOME '.skyrim-forge/config.toml.pre-3.0.1.bak'
+          if (-not (Test-Path -LiteralPath $backup -PathType Leaf)) { throw 'Legacy config backup was not created.' }
+          $migrated = Get-Content -LiteralPath (Join-Path $HOME '.skyrim-forge/config.toml') -Raw
+          if ($migrated -notmatch '\[tools\.papyrus_compiler\]') { throw 'Papyrus compiler was not migrated.' }
+          ./Install-or-Update.ps1
+          ./writer/published/win-x64/SkyrimForge.Native.exe version
+          ./writer/published/win-x64/SkyrimForge.Native.exe self-test
+          ./.venv/Scripts/python.exe -m skyrim_forge doctor
