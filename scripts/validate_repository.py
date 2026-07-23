@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "3.0.1"
+VERSION = "3.0.2"
 EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
@@ -219,22 +219,43 @@ def write_reports(report: dict[str, Any]) -> None:
     (ROOT/"SBOM.spdx.json").write_text(json.dumps(sbom,indent=2,sort_keys=True)+"\n",encoding="utf-8")
 
 
-def validate() -> dict[str, Any]:
+VALIDATION_SCOPES = {
+    "python": ("files", "powershell", "python", "packaging", "mcp"),
+    "full": ("files", "powershell", "python", "native", "go", "packaging", "mcp"),
+}
+
+
+def validation_checks(scope: str) -> tuple[str, ...]:
+    try:
+        return VALIDATION_SCOPES[scope]
+    except KeyError as exc:
+        raise ValueError(f"Unknown validation scope: {scope}") from exc
+
+
+def validate(scope: str = "full") -> dict[str, Any]:
     errors=[]; warnings=[]; checks={}
-    checks["files"]=validate_files(errors,warnings)
-    checks["powershell"]=validate_powershell(errors,warnings)
-    checks["python"]=validate_python(errors)
-    checks["native"]=validate_native(errors,warnings)
-    checks["go"]=validate_go(errors,warnings)
-    checks["packaging"]=validate_packaging(errors)
-    checks["mcp"]=validate_mcp(errors)
-    return {"product":"Skyrim Forge","version":VERSION,"result":"PASS" if not errors else "FAIL","errors":sorted(set(errors)),"warnings":sorted(set(warnings)),"checks":checks}
+    selected = validation_checks(scope)
+    if "files" in selected: checks["files"]=validate_files(errors,warnings)
+    if "powershell" in selected: checks["powershell"]=validate_powershell(errors,warnings)
+    if "python" in selected: checks["python"]=validate_python(errors)
+    if "native" in selected: checks["native"]=validate_native(errors,warnings)
+    if "go" in selected: checks["go"]=validate_go(errors,warnings)
+    if "packaging" in selected: checks["packaging"]=validate_packaging(errors)
+    if "mcp" in selected: checks["mcp"]=validate_mcp(errors)
+    return {"product":"Skyrim Forge","version":VERSION,"scope":scope,"result":"PASS" if not errors else "FAIL","errors":sorted(set(errors)),"warnings":sorted(set(warnings)),"checks":checks}
 
 
 def main() -> int:
-    parser=argparse.ArgumentParser(); parser.add_argument("--write-reports",action="store_true"); parser.add_argument("--ci",action="store_true"); args=parser.parse_args()
-    report=validate()
-    if args.write_reports: write_reports(report)
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--write-reports",action="store_true")
+    parser.add_argument("--ci",action="store_true",help="Deprecated alias retained for compatibility")
+    parser.add_argument("--scope",choices=sorted(VALIDATION_SCOPES),default="full")
+    args=parser.parse_args()
+    report=validate(args.scope)
+    if args.write_reports:
+        if args.scope != "full":
+            parser.error("--write-reports requires --scope full")
+        write_reports(report)
     print(json.dumps(portable(report),indent=2,sort_keys=True))
     return 0 if report["result"]=="PASS" else 1
 

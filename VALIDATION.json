@@ -6,26 +6,26 @@
         "json": 26,
         "pascal": 4,
         "powershell": 6,
-        "python": 42,
+        "python": 44,
         "toml": 2,
         "xml": 0,
         "yaml": 6
       },
-      "file_count": 132
+      "file_count": 136
     },
     "go": {
       "builds": {
         "linux": {
-          "bundled": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
-          "first": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
+          "bundled": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
+          "first": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
           "result": "PASS",
-          "second": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1"
+          "second": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278"
         },
         "windows": {
-          "bundled": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
-          "first": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
+          "bundled": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
+          "first": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
           "result": "PASS",
-          "second": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+          "second": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
         }
       },
       "format": {
@@ -79,8 +79,8 @@
     "native": {
       "executed_platform": "linux",
       "hashes": {
-        "linux": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
-        "windows": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+        "linux": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
+        "windows": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
       },
       "linux_elf": true,
       "result": "PASS",
@@ -100,20 +100,20 @@
         ],
         "returncode": 0,
         "stderr": "",
-        "stdout": "SkyrimForge.Native 3.0.1 go\n"
+        "stdout": "SkyrimForge.Native 3.0.2 go\n"
       },
       "windows_pe": true
     },
     "packaging": {
       "sdist": {
         "result": "PASS",
-        "sha256": "d6f3641ee1de3ecd19b55703e77b12b326c1ae53e069f7412811c1806caadf4e",
-        "size": 3428721
+        "sha256": "402d3d5542fbabed769c59961b37e2425bc8759dc119c6a069b2108c7763f085",
+        "size": 3432862
       },
       "wheel": {
         "result": "PASS",
-        "sha256": "7cfcda73693a85ff81b79cd7fb95d631475b2414f1ef7b6378872fddbe9d3315",
-        "size": 1738292
+        "sha256": "53656bd776f8ec6bc4319f2c0e4f47a084a6fea1393daab57069aed98c43f703",
+        "size": 1739178
       }
     },
     "powershell": {
@@ -144,7 +144,7 @@
         "stdout": ""
       },
       "result": "PASS",
-      "test_count": 28,
+      "test_count": 35,
       "tests": {
         "command": [
           "/opt/pyvenv/bin/python3",
@@ -156,7 +156,7 @@
           "-v"
         ],
         "returncode": 0,
-        "stderr": "test_automation_framework_job (test_automation.AutomationTests.test_automation_framework_job) ... ok\ntest_external_worker_contract (test_automation.AutomationTests.test_external_worker_contract) ... ok\ntest_external_worker_forces_output_root_and_rejects_escape (test_automation.AutomationTests.test_external_worker_forces_output_root_and_rejects_escape) ... ok\ntest_loot_apply_only_allows_configured_profile_targets (test_automation.AutomationTests.test_loot_apply_only_allows_configured_profile_targets) ... ok\ntest_loot_plan_comparison (test_automation.AutomationTests.test_loot_plan_comparison) ... ok\ntest_mo2_command_forbids_multiple (test_automation.AutomationTests.test_mo2_command_forbids_multiple) ... ok\ntest_profile_snapshot (test_automation.AutomationTests.test_profile_snapshot) ... ok\ntest_ui_job_rejects_coordinates_and_ocr (test_automation.AutomationTests.test_ui_job_rejects_coordinates_and_ocr) ... ok\ntest_unknown_automation_fields_rejected (test_automation.AutomationTests.test_unknown_automation_fields_rejected) ... ok\ntest_xedit_command_and_marker (test_automation.AutomationTests.test_xedit_command_and_marker) ... ok\ntest_xedit_fixed_script_executes_without_user_input (test_automation.AutomationTests.test_xedit_fixed_script_executes_without_user_input) ... ok\ntest_config_first_use_creates_workspace (test_core.CoreTests.test_config_first_use_creates_workspace) ... ok\ntest_current_papyrus_defaults_roundtrip_without_repeated_migration (test_core.CoreTests.test_current_papyrus_defaults_roundtrip_without_repeated_migration) ... ok\ntest_framework_regressions (test_core.CoreTests.test_framework_regressions) ... ok\ntest_legacy_papyrus_config_migrates_and_backs_up (test_core.CoreTests.test_legacy_papyrus_config_migrates_and_backs_up) ... ok\ntest_plugin_build_and_query (test_core.CoreTests.test_plugin_build_and_query) ... ok\ntest_plugin_plan_rejects_unknown_record (test_core.CoreTests.test_plugin_plan_rejects_unknown_record) ... ok\ntest_record_query_rejects_unbounded_limit (test_core.CoreTests.test_record_query_rejects_unbounded_limit) ... ok\ntest_release_rejects_private_windows_user_path (test_core.CoreTests.test_release_rejects_private_windows_user_path) ... ok\ntest_release_rejects_symlink (test_core.CoreTests.test_release_rejects_symlink) ... ok\ntest_release_validation_and_determinism (test_core.CoreTests.test_release_validation_and_determinism) ... ok\ntest_strict_json_rejects_duplicates_and_nonfinite (test_core.CoreTests.test_strict_json_rejects_duplicates_and_nonfinite) ... ok\ntest_version_and_self_test_do_not_load_broken_config (test_core.CoreTests.test_version_and_self_test_do_not_load_broken_config) ... ok\ntest_workspace_escape_and_symlink_rejected (test_core.CoreTests.test_workspace_escape_and_symlink_rejected) ... ok\ntest_initialize_and_tools (test_mcp.McpTests.test_initialize_and_tools) ... ok\ntest_tool_call (test_mcp.McpTests.test_tool_call) ... ok\ntest_no_external_build_requirements (test_packaging.PackagingTests.test_no_external_build_requirements) ... ok\ntest_wheel_determinism_and_native_files (test_packaging.PackagingTests.test_wheel_determinism_and_native_files) ... ok\n\n----------------------------------------------------------------------\nRan 28 tests in 4.269s\n\nOK\n",
+        "stderr": "test_automation_framework_job (test_automation.AutomationTests.test_automation_framework_job) ... ok\ntest_external_worker_contract (test_automation.AutomationTests.test_external_worker_contract) ... ok\ntest_external_worker_forces_output_root_and_rejects_escape (test_automation.AutomationTests.test_external_worker_forces_output_root_and_rejects_escape) ... ok\ntest_invalid_windows_exe_is_rejected_before_launch (test_automation.AutomationTests.test_invalid_windows_exe_is_rejected_before_launch) ... skipped 'Windows-specific executable validation'\ntest_loot_apply_only_allows_configured_profile_targets (test_automation.AutomationTests.test_loot_apply_only_allows_configured_profile_targets) ... ok\ntest_loot_plan_comparison (test_automation.AutomationTests.test_loot_plan_comparison) ... ok\ntest_mo2_command_forbids_multiple (test_automation.AutomationTests.test_mo2_command_forbids_multiple) ... ok\ntest_profile_snapshot (test_automation.AutomationTests.test_profile_snapshot) ... ok\ntest_python_fixture_uses_current_interpreter (test_automation.AutomationTests.test_python_fixture_uses_current_interpreter) ... ok\ntest_ui_job_rejects_coordinates_and_ocr (test_automation.AutomationTests.test_ui_job_rejects_coordinates_and_ocr) ... ok\ntest_unknown_automation_fields_rejected (test_automation.AutomationTests.test_unknown_automation_fields_rejected) ... ok\ntest_xedit_command_and_marker (test_automation.AutomationTests.test_xedit_command_and_marker) ... ok\ntest_xedit_fixed_script_executes_without_user_input (test_automation.AutomationTests.test_xedit_fixed_script_executes_without_user_input) ... ok\ntest_full_scope_contains_reproducibility_checks (test_ci_validation.CIValidationScopeTests.test_full_scope_contains_reproducibility_checks) ... ok\ntest_python_scope_never_rebuilds_native_binaries (test_ci_validation.CIValidationScopeTests.test_python_scope_never_rebuilds_native_binaries) ... ok\ntest_unknown_scope_is_rejected (test_ci_validation.CIValidationScopeTests.test_unknown_scope_is_rejected) ... ok\ntest_config_first_use_creates_workspace (test_core.CoreTests.test_config_first_use_creates_workspace) ... ok\ntest_current_papyrus_defaults_roundtrip_without_repeated_migration (test_core.CoreTests.test_current_papyrus_defaults_roundtrip_without_repeated_migration) ... ok\ntest_framework_regressions (test_core.CoreTests.test_framework_regressions) ... ok\ntest_legacy_papyrus_config_migrates_and_backs_up (test_core.CoreTests.test_legacy_papyrus_config_migrates_and_backs_up) ... ok\ntest_plugin_build_and_query (test_core.CoreTests.test_plugin_build_and_query) ... ok\ntest_plugin_plan_rejects_unknown_record (test_core.CoreTests.test_plugin_plan_rejects_unknown_record) ... ok\ntest_record_query_rejects_unbounded_limit (test_core.CoreTests.test_record_query_rejects_unbounded_limit) ... ok\ntest_release_rejects_private_windows_user_path (test_core.CoreTests.test_release_rejects_private_windows_user_path) ... ok\ntest_release_rejects_symlink (test_core.CoreTests.test_release_rejects_symlink) ... ok\ntest_release_validation_and_determinism (test_core.CoreTests.test_release_validation_and_determinism) ... ok\ntest_strict_json_rejects_duplicates_and_nonfinite (test_core.CoreTests.test_strict_json_rejects_duplicates_and_nonfinite) ... ok\ntest_version_and_self_test_do_not_load_broken_config (test_core.CoreTests.test_version_and_self_test_do_not_load_broken_config) ... ok\ntest_workspace_escape_and_symlink_rejected (test_core.CoreTests.test_workspace_escape_and_symlink_rejected) ... ok\ntest_initialize_and_tools (test_mcp.McpTests.test_initialize_and_tools) ... ok\ntest_tool_call (test_mcp.McpTests.test_tool_call) ... ok\ntest_no_external_build_requirements (test_packaging.PackagingTests.test_no_external_build_requirements) ... ok\ntest_wheel_determinism_and_native_files (test_packaging.PackagingTests.test_wheel_determinism_and_native_files) ... ok\ntest_python_script_executes_through_current_interpreter (test_process_launch.ProcessLaunchTests.test_python_script_executes_through_current_interpreter) ... ok\ntest_windows_rejects_text_disguised_as_exe_without_launching (test_process_launch.ProcessLaunchTests.test_windows_rejects_text_disguised_as_exe_without_launching) ... skipped 'Windows-specific PE guard'\n\n----------------------------------------------------------------------\nRan 35 tests in 4.397s\n\nOK (skipped=2)\n",
         "stdout": ""
       }
     }
@@ -164,7 +164,8 @@
   "errors": [],
   "product": "Skyrim Forge",
   "result": "PASS",
-  "version": "3.0.1",
+  "scope": "full",
+  "version": "3.0.2",
   "warnings": [
     "PowerShell syntax is statically screened here; Windows CI performs the real PowerShell parser and installer smoke test"
   ]

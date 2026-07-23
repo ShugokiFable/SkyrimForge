@@ -2,16 +2,16 @@
   "go": {
     "builds": {
       "linux": {
-        "bundled": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
-        "first": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
+        "bundled": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
+        "first": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
         "result": "PASS",
-        "second": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1"
+        "second": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278"
       },
       "windows": {
-        "bundled": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
-        "first": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
+        "bundled": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
+        "first": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
         "result": "PASS",
-        "second": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+        "second": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
       }
     },
     "format": {
@@ -70,8 +70,8 @@
   "native": {
     "executed_platform": "linux",
     "hashes": {
-      "linux": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
-      "windows": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+      "linux": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
+      "windows": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
     },
     "linux_elf": true,
     "result": "PASS",
@@ -91,11 +91,11 @@
       ],
       "returncode": 0,
       "stderr": "",
-      "stdout": "SkyrimForge.Native 3.0.1 go\n"
+      "stdout": "SkyrimForge.Native 3.0.2 go\n"
     },
     "windows_pe": true
   },
   "product": "Skyrim Forge",
   "result": "PASS",
-  "version": "3.0.1"
+  "version": "3.0.2"
 }

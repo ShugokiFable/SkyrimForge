@@ -4,6 +4,8 @@ import os
 import re
 import shutil
 import subprocess
+import struct
+import sys
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -62,6 +64,47 @@ def resolve_tool(config: ForgeConfig, name: str, *, worker: bool = False, requir
     return tool, path.resolve(strict=True)
 
 
+WINDOWS_PE_MACHINES = {0x014C: "x86", 0x8664: "x64", 0xAA64: "arm64"}
+
+
+def _validate_windows_executable(path: Path) -> dict[str, Any]:
+    try:
+        with path.open("rb") as stream:
+            header = stream.read(64)
+            if len(header) < 64 or header[:2] != b"MZ":
+                raise ToolError(f"Configured .exe is not a Windows PE executable: {path}")
+            pe_offset = struct.unpack_from("<I", header, 0x3C)[0]
+            if pe_offset < 64 or pe_offset > 64 * 1024 * 1024:
+                raise ToolError(f"Configured .exe has an invalid PE header offset: {path}")
+            stream.seek(pe_offset)
+            signature = stream.read(6)
+    except OSError as exc:
+        raise ToolError(f"Could not inspect configured executable: {path}: {exc}") from exc
+    if len(signature) != 6 or signature[:4] != b"PE\x00\x00":
+        raise ToolError(f"Configured .exe is not a valid Windows PE executable: {path}")
+    machine = struct.unpack_from("<H", signature, 4)[0]
+    if machine not in WINDOWS_PE_MACHINES:
+        raise ToolError(f"Unsupported Windows PE machine 0x{machine:04X}: {path}")
+    return {"machine": WINDOWS_PE_MACHINES[machine], "machine_code": f"0x{machine:04X}"}
+
+
+def build_process_command(executable: Path, arguments: list[str]) -> tuple[list[str], str]:
+    executable = executable.resolve(strict=True)
+    suffix = executable.suffix.casefold()
+    if suffix in {".py", ".pyw"}:
+        return [sys.executable, str(executable), *arguments], "python"
+    if suffix == ".ps1":
+        powershell = shutil.which("pwsh") or shutil.which("powershell")
+        if not powershell:
+            raise ToolError(f"PowerShell is required to run worker script: {executable}")
+        return [powershell, "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(executable), *arguments], "powershell"
+    if os.name == "nt" and suffix == ".exe":
+        _validate_windows_executable(executable)
+    elif os.name != "nt" and suffix == ".exe":
+        raise ToolError(f"Windows executable cannot run directly on this platform: {executable}")
+    return [str(executable), *arguments], "direct"
+
+
 def run_process(
     executable: Path,
     arguments: list[str],
@@ -79,7 +122,14 @@ def run_process(
     env = os.environ.copy()
     if environment:
         env.update({str(k): str(v) for k, v in environment.items()})
-    command = [str(executable), *arguments]
+    command, launcher = build_process_command(executable, arguments)
+    startupinfo = None
+    creationflags = 0
+    if os.name == "nt":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
         completed = subprocess.run(
             command,
@@ -91,11 +141,16 @@ def run_process(
             shell=False,
             timeout=timeout_seconds,
             check=False,
+            startupinfo=startupinfo,
+            creationflags=creationflags,
         )
     except subprocess.TimeoutExpired as exc:
         raise ToolError(f"Process timed out after {timeout_seconds}s: {executable.name}") from exc
+    except OSError as exc:
+        raise ToolError(f"Could not launch {executable}: {exc}") from exc
     return {
         "command": command,
+        "launcher": launcher,
         "cwd": str(cwd),
         "returncode": completed.returncode,
         "stdout": truncate(completed.stdout),

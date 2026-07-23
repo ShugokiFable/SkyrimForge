@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-import stat
 import tempfile
+import sys
 import unittest
 from pathlib import Path
 
@@ -15,12 +15,14 @@ from skyrim_forge.mo2 import build_mo2_command
 from skyrim_forge.profiles import snapshot_profile
 from skyrim_forge.ui_automation import validate_ui_job
 from skyrim_forge.xedit import check_errors, install_scripts, parse_check_output
+from skyrim_forge.tools import build_process_command, run_process
+from skyrim_forge.errors import ToolError
 from skyrim_forge.util import sha256_file
 
 
-def executable(path: Path, body: str) -> Path:
-    path.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
-    path.chmod(path.stat().st_mode | stat.S_IXUSR)
+def python_fixture(path: Path, body: str) -> Path:
+    path = path.with_suffix(".py")
+    path.write_text(body, encoding="utf-8")
     return path
 
 
@@ -41,10 +43,28 @@ class AutomationTests(unittest.TestCase):
         self.assertEqual(parsed["status"], "PASS")
         self.assertTrue(parsed["marker_found"])
 
+    def test_python_fixture_uses_current_interpreter(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            script = python_fixture(root / "worker", 'print("fixture-ok")\n')
+            command, launcher = build_process_command(script, ["--flag"])
+            self.assertEqual(command[:2], [sys.executable, str(script.resolve())])
+            self.assertEqual(launcher, "python")
+
+    def test_invalid_windows_exe_is_rejected_before_launch(self):
+        if os.name != "nt":
+            self.skipTest("Windows-specific executable validation")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fake = root / "SSEEdit64.exe"
+            fake.write_text("#!/usr/bin/env python3\nprint('not-pe')\n", encoding="utf-8")
+            with self.assertRaisesRegex(ToolError, "not a Windows PE executable"):
+                run_process(fake, [], cwd=root, timeout_seconds=5)
+
     def test_xedit_fixed_script_executes_without_user_input(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td); cfg = config(root)
-            xedit = executable(root / "SSEEdit64.exe", 'import sys\nprint("SKYRIM_FORGE_CHECK_ERRORS errors=0 records=42")\n')
+            xedit = python_fixture(root / "SSEEdit64", 'import sys\nprint("SKYRIM_FORGE_CHECK_ERRORS errors=0 records=42")\n')
             cfg.tools["xedit"].executable = xedit
             install_scripts(cfg, approved=True)
             report = check_errors(cfg, "Example.esp", cwd=cfg.workspace_root)
@@ -65,7 +85,7 @@ class AutomationTests(unittest.TestCase):
     def test_external_worker_contract(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td); cfg = config(root)
-            worker = executable(root / "worker", '''import argparse,json\np=argparse.ArgumentParser();p.add_argument("--job");p.add_argument("--result");a=p.parse_args();j=json.load(open(a.job));json.dump({"job_id":j["job_id"],"status":"success","outputs":[]},open(a.result,"w"))\n''')
+            worker = python_fixture(root / "worker", '''import argparse,json\np=argparse.ArgumentParser();p.add_argument("--job");p.add_argument("--result");a=p.parse_args();j=json.load(open(a.job));json.dump({"job_id":j["job_id"],"status":"success","outputs":[]},open(a.result,"w"))\n''')
             cfg.tools["loot_worker"].executable = worker
             cfg.tools["loot_worker"].sha256 = sha256_file(worker)
             job = root / "job.json"; result = cfg.workspace_root / "result.json"
@@ -76,7 +96,7 @@ class AutomationTests(unittest.TestCase):
     def test_external_worker_forces_output_root_and_rejects_escape(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td); cfg = config(root)
-            worker = executable(root / "worker", '''import argparse,json,os
+            worker = python_fixture(root / "worker", '''import argparse,json,os
 p=argparse.ArgumentParser();p.add_argument("--job");p.add_argument("--result");a=p.parse_args();j=json.load(open(a.job));json.dump({"job_id":j["job_id"],"status":"success","outputs":[os.path.join(os.path.dirname(j["output_dir"]),"escape.txt")]},open(a.result,"w"))
 ''')
             cfg.tools["loot_worker"].executable = worker

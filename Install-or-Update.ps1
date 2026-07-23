@@ -12,6 +12,9 @@ function Invoke-Checked {
 
 function Find-Python {
     $Candidates = @()
+    if ($env:SKYRIM_FORGE_PYTHON) {
+        $Candidates += [pscustomobject]@{Exe=$env:SKYRIM_FORGE_PYTHON;Args=@()}
+    }
     if (Get-Command py -ErrorAction SilentlyContinue) { $Candidates += [pscustomobject]@{Exe='py';Args=@('-3')} }
     if (Get-Command python -ErrorAction SilentlyContinue) { $Candidates += [pscustomobject]@{Exe='python';Args=@()} }
     if (Get-Command python3 -ErrorAction SilentlyContinue) { $Candidates += [pscustomobject]@{Exe='python3';Args=@()} }
