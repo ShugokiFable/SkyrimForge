@@ -17,7 +17,7 @@
 | Remote URL | `https://github.com/ShugokiFable/skyrim-forge.git` |
 | Live page | https://github.com/ShugokiFable/skyrim-forge |
 | Who prepared this listing | Grok (xAI) — published 2026-07-23 |
-| Note | CI workflow files (`.github/workflows/*`) are local only until `gh auth` has `workflow` scope |
+| Note | CI / CodeQL / Release workflows are on `main` (pushed after `workflow` scope granted) |
 
 ---
 
