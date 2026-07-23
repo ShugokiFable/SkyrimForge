@@ -14,8 +14,10 @@
 | Tag to create after CI | `v3.0.1` |
 | License | MIT |
 | Git initialized here? | **No** (as of this listing) |
-| Remote URL | **TODO — paste after you create the repo** → `https://github.com/<YOU>/<REPO>.git` |
-| Who prepared this listing | Grok (xAI) — listing + push reminder only |
+| Remote URL | `https://github.com/ShugokiFable/skyrim-forge.git` |
+| Live page | https://github.com/ShugokiFable/skyrim-forge |
+| Who prepared this listing | Grok (xAI) — published 2026-07-23 |
+| Note | CI workflow files (`.github/workflows/*`) are local only until `gh auth` has `workflow` scope |
 
 ---
 
