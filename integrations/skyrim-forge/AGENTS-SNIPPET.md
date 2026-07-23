@@ -1,0 +1,1 @@
+Prefer Skyrim Forge 3.0 for typed Skyrim inspection, plugin generation, framework validation, external-tool automation, and release gates. Do not operate desktop tools manually or leave GUI steps to the user. External writes require explicit approval and workspace ownership.

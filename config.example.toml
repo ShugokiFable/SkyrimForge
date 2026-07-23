@@ -1,0 +1,44 @@
+[paths]
+workspace_root = "D:\\Skyrim Forge Workspaces"
+audit_log = "C:\\Users\\YOU\\.skyrim-forge\\audit.jsonl"
+skyrim_data = "D:\\SteamLibrary\\steamapps\\common\\Skyrim Special Edition\\Data"
+plugins_file = "C:\\Users\\YOU\\AppData\\Local\\Skyrim Special Edition\\plugins.txt"
+loadorder_file = "C:\\Users\\YOU\\AppData\\Local\\Skyrim Special Edition\\loadorder.txt"
+mo2_profiles_root = "D:\\Modding\\MO2\\profiles"
+mo2_instance = ""
+vortex_staging = "D:\\Vortex Mods\\skyrimse"
+vortex_downloads = "D:\\Vortex Downloads\\skyrimse"
+tools_root = "D:\\Skyrim Tools"
+seven_zip = "C:\\Program Files\\7-Zip\\7z.exe"
+extra_read_roots = []
+
+[papyrus]
+flags = "D:\\SteamLibrary\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source\\TESV_Papyrus_Flags.flg"
+imports = [
+  "D:\\SteamLibrary\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source"
+]
+
+[safety]
+allow_external_processes = false
+require_approval_for_writes = true
+allow_ui_automation = false
+
+[limits]
+max_scan_files = 250000
+max_output_bytes = 2000000000
+
+[tools.xedit]
+executable = "D:\\Skyrim Tools\\SSEEdit\\SSEEdit64.exe"
+worker = ""
+sha256 = ""
+version = ""
+worker_sha256 = ""
+timeout_seconds = 1800
+
+[tools.mo2]
+executable = "D:\\Modding\\MO2\\ModOrganizer.exe"
+worker = ""
+sha256 = ""
+version = ""
+worker_sha256 = ""
+timeout_seconds = 1800

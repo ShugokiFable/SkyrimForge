@@ -1,0 +1,12 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.exe binary
+*.dll binary
+*.esp binary
+*.esm binary
+*.esl binary
+*.pex binary
+*.nif binary
+*.dds binary
+*.zip binary

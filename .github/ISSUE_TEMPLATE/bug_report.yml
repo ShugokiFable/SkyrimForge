@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible Skyrim Forge defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes: {label: Forge version}
+    validations: {required: true}
+  - type: textarea
+    id: job
+    attributes: {label: Typed job or exact CLI command}
+    validations: {required: true}
+  - type: textarea
+    id: output
+    attributes: {label: Complete sanitized output}
+    validations: {required: true}
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: I removed private paths, credentials, and unlicensed assets.
+          required: true

@@ -1,0 +1,101 @@
+{
+  "go": {
+    "builds": {
+      "linux": {
+        "bundled": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
+        "first": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
+        "result": "PASS",
+        "second": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1"
+      },
+      "windows": {
+        "bundled": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
+        "first": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91",
+        "result": "PASS",
+        "second": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+      }
+    },
+    "format": {
+      "command": [
+        "gofmt",
+        "-l",
+        "."
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "race": {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "./..."
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "ok  \tskyrimforge/native\t(cached)\n"
+    },
+    "result": "PASS",
+    "tests": {
+      "command": [
+        "go",
+        "test",
+        "./..."
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "ok  \tskyrimforge/native\t(cached)\n"
+    },
+    "vet": {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "limitations": [
+    "Windows native helper and PowerShell installers require Windows execution; GitHub CI performs that gate.",
+    "Installed xEdit, MO2, LOOT, Wrye Bash, Creation Kit, CKPE, and Papyrus tools require local configuration and legal installations.",
+    "No Skyrim runtime, save, visual, navmesh, animation, or gameplay validation was performed in this environment."
+  ],
+  "mcp": {
+    "result": "PASS",
+    "stderr": "",
+    "tools": 19
+  },
+  "native": {
+    "executed_platform": "linux",
+    "hashes": {
+      "linux": "3b0858bd8eb9d5250769d56e5b8eff737ab173a7c64e2698da3becbbc030f7e1",
+      "windows": "758bb14f0ef89284bf3f1f943b254a2ee925d79f105ea39829f2e465eab60e91"
+    },
+    "linux_elf": true,
+    "result": "PASS",
+    "self_test": {
+      "command": [
+        "<REPOSITORY_ROOT>/writer/published/linux-x64/SkyrimForge.Native",
+        "self-test"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "SKYRIM FORGE NATIVE SELF-TEST: PASS\n"
+    },
+    "version": {
+      "command": [
+        "<REPOSITORY_ROOT>/writer/published/linux-x64/SkyrimForge.Native",
+        "version"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "SkyrimForge.Native 3.0.1 go\n"
+    },
+    "windows_pe": true
+  },
+  "product": "Skyrim Forge",
+  "result": "PASS",
+  "version": "3.0.1"
+}
