@@ -20,7 +20,7 @@ def metadata():
     rows = ["Metadata-Version: 2.4", f"Name: {p['name']}", f"Version: {p['version']}", f"Summary: {p['description']}", f"Requires-Python: {p['requires-python']}", "License-Expression: MIT", "Description-Content-Type: text/markdown"]
     return ("\n".join(rows) + "\n\n" + (ROOT / "README.md").read_text(encoding="utf-8") + "\n").encode()
 
-def wheel_text(): return b"Wheel-Version: 1.0\nGenerator: Skyrim Forge 4.2.3 deterministic backend\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+def wheel_text(): return b"Wheel-Version: 1.0\nGenerator: Skyrim Forge 4.2.4 deterministic backend\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
 def entry_points(): return b"[console_scripts]\nforge = skyrim_forge.cli:main\nskyrim-forge-mcp = skyrim_forge.mcp_server:serve\nskyrim-forge-gui = skyrim_forge.gui:run_gui\n"
 def get_requires_for_build_wheel(config_settings=None): return []
 def get_requires_for_build_sdist(config_settings=None): return []

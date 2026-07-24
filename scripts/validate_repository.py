@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "4.2.3"
+VERSION = "4.2.4"
 EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
@@ -165,12 +165,21 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         for target, env in {"linux":{"CGO_ENABLED":"0","GOOS":"linux","GOARCH":"amd64"},"windows":{"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}}.items():
             suffix=".exe" if target=="windows" else ""; a=td/f"{target}-a{suffix}"; b=td/f"{target}-b{suffix}"
             for output in (a,b):
-                result=run(["go","build","-trimpath","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
+                result=run(["go","build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
                 if result["returncode"]: errors.append(f"{target} native build failed")
             if a.exists() and b.exists():
                 bundled=ROOT/"writer"/"published"/("win-x64" if target=="windows" else "linux-x64")/("SkyrimForge.Native.exe" if target=="windows" else "SkyrimForge.Native")
-                builds[target]={"first":sha256(a),"second":sha256(b),"bundled":sha256(bundled),"result":"PASS" if sha256(a)==sha256(b)==sha256(bundled) else "FAIL"}
-                if builds[target]["result"]!="PASS": errors.append(f"{target} native binary is not reproducible")
+                first_hash=sha256(a); second_hash=sha256(b); bundled_hash=sha256(bundled)
+                builds[target]={
+                    "first":first_hash,
+                    "second":second_hash,
+                    "bundled":bundled_hash,
+                    "buildvcs":False,
+                    "first_metadata":run(["go","version","-m",str(a)],cwd=cwd),
+                    "bundled_metadata":run(["go","version","-m",str(bundled)],cwd=cwd),
+                    "result":"PASS" if first_hash==second_hash==bundled_hash else "FAIL",
+                }
+                if builds[target]["result"]!="PASS": errors.append(f"{target} native binary is not reproducible under the -buildvcs=false release profile")
     return {"format":fmt,"vet":vet,"tests":tests,"race":race,"builds":builds,"result":"PASS" if not any(x in errors for x in ["gofmt failed","go vet failed","go tests failed","go race tests failed"]) and all(x.get("result")=="PASS" for x in builds.values()) else "FAIL"}
 
 

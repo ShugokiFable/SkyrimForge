@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.2.4
+
+- Fixed GitHub release validation failing because Go embedded Git revision and commit-time metadata only when building inside the Actions checkout.
+- Added `-buildvcs=false` to the canonical native-helper build and reproducibility validator.
+- Added a canonical native-helper rebuild script that updates both published and packaged copies.
+- Added a regression that creates a real temporary Git repository and requires its deterministic build to match the bundled helper byte-for-byte.
+- Added build-metadata diagnostics to native reproducibility reports.
+
 ## 4.2.3
 
 - Fixed the installed regression suite scanning `.venv\Scripts\Activate.ps1` as if it were Forge-owned release source.

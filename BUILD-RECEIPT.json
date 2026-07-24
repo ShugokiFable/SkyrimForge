@@ -2,16 +2,62 @@
   "go": {
     "builds": {
       "linux": {
-        "bundled": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
-        "first": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
+        "buildvcs": false,
+        "bundled": "dd267404642a55af825096b3f1dfe58e8083c955ff95091398bfa381c3ede688",
+        "bundled_metadata": {
+          "command": [
+            "go",
+            "version",
+            "-m",
+            "<REPOSITORY_ROOT>/writer/published/linux-x64/SkyrimForge.Native"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<REPOSITORY_ROOT>/writer/published/linux-x64/SkyrimForge.Native: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n"
+        },
+        "first": "dd267404642a55af825096b3f1dfe58e8083c955ff95091398bfa381c3ede688",
+        "first_metadata": {
+          "command": [
+            "go",
+            "version",
+            "-m",
+            "<TEMP><TEMP>q04dsvhp/linux-a"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<TEMP><TEMP>q04dsvhp/linux-a: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n"
+        },
         "result": "PASS",
-        "second": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e"
+        "second": "dd267404642a55af825096b3f1dfe58e8083c955ff95091398bfa381c3ede688"
       },
       "windows": {
-        "bundled": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf",
-        "first": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf",
+        "buildvcs": false,
+        "bundled": "bc9502f70cf160e9860b117dbae674ff2d69fb80e92cf1cee60037e348255bef",
+        "bundled_metadata": {
+          "command": [
+            "go",
+            "version",
+            "-m",
+            "<REPOSITORY_ROOT>/writer/published/win-x64/SkyrimForge.Native.exe"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<REPOSITORY_ROOT>/writer/published/win-x64/SkyrimForge.Native.exe: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n"
+        },
+        "first": "bc9502f70cf160e9860b117dbae674ff2d69fb80e92cf1cee60037e348255bef",
+        "first_metadata": {
+          "command": [
+            "go",
+            "version",
+            "-m",
+            "<TEMP><TEMP>q04dsvhp/windows-a.exe"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<TEMP><TEMP>q04dsvhp/windows-a.exe: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n"
+        },
         "result": "PASS",
-        "second": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
+        "second": "bc9502f70cf160e9860b117dbae674ff2d69fb80e92cf1cee60037e348255bef"
       }
     },
     "format": {
@@ -101,14 +147,14 @@
   "native": {
     "executed_platform": "linux",
     "hashes": {
-      "linux": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
-      "windows": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
+      "linux": "dd267404642a55af825096b3f1dfe58e8083c955ff95091398bfa381c3ede688",
+      "windows": "bc9502f70cf160e9860b117dbae674ff2d69fb80e92cf1cee60037e348255bef"
     },
     "linux_elf": true,
     "package_copies_match": true,
     "package_copy_hashes": {
-      "linux": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
-      "windows": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
+      "linux": "dd267404642a55af825096b3f1dfe58e8083c955ff95091398bfa381c3ede688",
+      "windows": "bc9502f70cf160e9860b117dbae674ff2d69fb80e92cf1cee60037e348255bef"
     },
     "result": "PASS",
     "self_test": {
@@ -127,11 +173,11 @@
       ],
       "returncode": 0,
       "stderr": "",
-      "stdout": "SkyrimForge.Native 4.2.3 go\n"
+      "stdout": "SkyrimForge.Native 4.2.4 go\n"
     },
     "windows_pe": true
   },
   "product": "Skyrim Forge",
   "result": "PASS",
-  "version": "4.2.3"
+  "version": "4.2.4"
 }

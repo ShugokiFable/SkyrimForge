@@ -4,7 +4,7 @@ import argparse, hashlib, os, stat, zipfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="4.2.3"
+VERSION="4.2.4"
 FIXED=(2026,7,23,0,0,0)
 EXCLUDED={".git",".venv","venv","__pycache__","dist","build",".pytest_cache"}
 

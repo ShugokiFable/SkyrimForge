@@ -1,5 +1,7 @@
 # Release process
 
+0. Rebuild native helpers with `python scripts/rebuild_native_helpers.py`. This uses the exact deterministic profile: Go 1.23.2, `-trimpath`, `-buildvcs=false`, stripped symbols, and an empty build ID.
+
 1. Run the complete repository validator with `--write-reports`.
 2. Run all required GitHub CI and CodeQL jobs.
 3. Execute the Windows installer twice in CI.

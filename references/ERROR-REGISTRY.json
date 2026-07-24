@@ -2337,5 +2337,34 @@
       "Duplicate ScriptName test sees only the second file content"
     ],
     "title": "Case-collision Papyrus fixture overwrites itself on Windows"
+  },
+  {
+    "applies_to": [
+      "Release CI",
+      "Native helper packaging"
+    ],
+    "evidence_status": "reproduced",
+    "id": "CI-NATIVE-VCS-METADATA",
+    "prevention": [
+      "Use -buildvcs=false for every release native build",
+      "Pin Go 1.23.2",
+      "Keep -trimpath and empty buildid",
+      "Compare rebuilt hashes to both published and packaged helper copies"
+    ],
+    "required_validation": [
+      "Build from a temporary Git checkout",
+      "Build from an extracted tree",
+      "Require identical SHA-256 hashes"
+    ],
+    "root_cause": "Go automatically embeds vcs.revision, vcs.time, and vcs.modified when source is inside a Git checkout unless -buildvcs=false is specified.",
+    "scope": "release-ci",
+    "symptom": "Fresh GitHub Actions native builds are deterministic with each other but do not match binaries built from an extracted source tree.",
+    "tags": [
+      "go",
+      "github-actions",
+      "reproducibility",
+      "vcs"
+    ],
+    "title": "Git checkout embeds VCS metadata and breaks native binary reproducibility"
   }
 ]
