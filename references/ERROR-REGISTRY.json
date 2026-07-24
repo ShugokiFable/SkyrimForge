@@ -2254,5 +2254,43 @@
       "ied"
     ],
     "title": "Unresolved runtime target is not classified by dependency scope"
+  },
+  {
+    "id": "SPID-003",
+    "title": "Static linter misclassified SPID skill range as actor-level range",
+    "scope": "shared-cross-provider",
+    "applies_to": [
+      "Claude",
+      "Codex",
+      "Grok",
+      "Kimi",
+      "Hermes"
+    ],
+    "evidence_status": "user-confirmed-runtime",
+    "symptom": "Forge reports Malformed SPID level range for a working filter such as 25/255,0(55/255).",
+    "root_cause": "The linter parsed every slash expression as an actor-level range and did not model skillType(min/max) tokens.",
+    "prevention": [
+      "Parse actor-level and skill expressions as separate grammar tokens.",
+      "Accept skill indexes 0 through 17 with min/max ranges.",
+      "Do not rewrite a working distribution solely because a static linter disagrees with a clean runtime parse log.",
+      "Treat runtime distribution evidence as stronger than a narrower static model."
+    ],
+    "required_validation": [
+      "Regression fixture for 25/255,0(55/255)",
+      "Negative fixture for 10/24,0(25)",
+      "Compare against SPID runtime parse/distribution logs"
+    ],
+    "sources": [
+      {
+        "provider": "claude",
+        "note": "SPID 7.3.1.16 distributed the For Honor perk using 25/255,0(55/255), while 0(25) produced invalid stoul argument."
+      }
+    ],
+    "tags": [
+      "spid",
+      "linter",
+      "false-positive",
+      "runtime-evidence"
+    ]
   }
 ]

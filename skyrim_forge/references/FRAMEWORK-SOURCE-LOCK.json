@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "audited": "2026-07-22",
-  "policy": "Exact installed parser/source outranks skills, guides, examples, and historical plans.",
+  "audited": "2026-07-24",
+  "policy": "Exact installed parser/source and runtime logs outrank static profiles. Unknown version-specific syntax is unverified, not automatically rewritten.",
   "spid": {
     "upstream_version": "7.3.1",
     "reference_version": "7.3.0",
@@ -16,10 +16,11 @@
       "Supported keys are Form, Spell, Perk, Item, Shout, LevSpell, Package, Outfit, Keyword, Faction, SleepOutfit, and Skin; Final modifies Outfit.",
       "Weapon is not a supported distribution key.",
       "There are seven possible value sections and omitted trailing sections are filled empty.",
-      "LevelFilters split by comma; actor-level ranges use slash and require both numeric endpoints.",
       "TraitFilters split on forward slash and valid tokens include D and -D.",
       "Chance is numeric and may have one trailing deterministic exclamation mark.",
-      "Validation must be field-aware."
+      "Validation must be field-aware.",
+      "LevelFilters split by comma; actor levels accept a minimum, half-open range, closed range, or exact min/min form.",
+      "Skill filters use skillIndex(min/max); exact skill values repeat the value, and skill indexes are 0-17."
     ]
   },
   "kid": {

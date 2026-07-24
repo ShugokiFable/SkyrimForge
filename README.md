@@ -1,8 +1,20 @@
-# Skyrim Forge 3.0
+# Skyrim Forge 4.2.0
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
-Forge 3.0 introduces the **Automation Fabric**. An AI does not click around SSEEdit, Creation Kit, Wrye Bash, LOOT, or Mod Organizer 2. It submits a typed JSON job. Forge validates the job, snapshots inputs, runs only the configured adapter, captures logs and outputs, reopens what it can verify, and writes an audit receipt.
+Forge 4.2 includes the **Automation Fabric** plus a mandatory rights-and-publication gate for shareable releases. An AI does not click around SSEEdit, Creation Kit, Wrye Bash, LOOT, or Mod Organizer 2. It submits a typed JSON job. Forge validates the job, snapshots inputs, runs only the configured adapter, captures logs and outputs, reopens what it can verify, and writes an audit receipt.
+
+## Public and Nexus releases
+
+Private packaging and public distribution are different trust levels. When the user or AI states that a mod is **shareable**, **public**, **for Nexus**, or otherwise intended for redistribution, Forge requires a typed Nexus publication plan and the Nexus target release gate. A normal ZIP is not called share-ready.
+
+```text
+forge nexus-scaffold <release-root> NEXUS-PUBLICATION-PLAN.json --mod-name "My Mod" --mod-version 1.0.0 --uploader "Author" --approve
+forge nexus-audit NEXUS-PUBLICATION-PLAN.json <release-root>
+forge nexus-build NEXUS-PUBLICATION-PLAN.json <release-root> <workspace-output> --approve
+```
+
+The gate maps every bundled file to its origin, author, licence or permission basis, credit, redistribution rights, Donation Points status, content classification, AI disclosure, and local evidence. Credit alone is never treated as permission. Forge blocks ambiguous rights, missing licence obligations, original game files, unsupported public claims, and incomplete uploader attestations. It cannot authenticate legal ownership or replace the uploader's final responsibility.
 
 ## Install
 
@@ -21,14 +33,45 @@ External tool execution is disabled by default. UI Automation is separately disa
 - Traverse normal and compressed plugin records and query signatures, raw FormIDs, local FormIDs, origins, and EditorIDs.
 - Create narrowly typed KYWD, GLOB, FLST, and OTFT plugins transactionally.
 - Validate SPID, KID, BOS, SkyPatcher placement, and CDF configuration.
+- Generate, simulate, and strictly validate complete FOMOD 5.0 installers from typed plans.
 - Compile Papyrus through the official compiler and reject stale PEX output.
 - Inspect archives and release trees.
-- Build deterministic release archives.
+- Build deterministic private release archives.
+- Audit and build Nexus Mods publication bundles with file-level rights mapping, permission evidence, credits, licensing, content classification, claim evidence, uploader attestation, and generated mod-page BBCode.
 - Snapshot MO2 profiles.
 - Run fixed, allowlisted xEdit scripts unattended.
 - Execute version-pinned JSON workers for LOOT, Wrye Bash, and Creation Kit.
 - Run narrowly calibrated, coordinate-free Windows UI Automation jobs when no headless worker exists.
 - Expose the workbench over CLI, GUI, and MCP.
+
+
+## Nexus Mods publication gate
+
+A private build and a public upload are not the same operation. When a user asks for a shareable, public, or Nexus-ready release, Forge requires a typed Nexus publication plan and blocks the final package until every bundled file has a rights record.
+
+The gate checks:
+
+- original and third-party asset provenance;
+- redistribution and modification permission;
+- permission evidence, without placing private messages in the public ZIP;
+- required credits and collaborators;
+- project and asset licences;
+- Donation Points compatibility;
+- original-game and piracy-risk files;
+- executables, source availability, and network behaviour;
+- adult-content classification and event-specific rules;
+- truthful performance and capability claims;
+- AI assistance disclosure and human verification;
+- a current review of official Nexus policies;
+- an uploader attestation that the AI is forbidden to sign.
+
+Use `docs/NEXUS-PUBLICATION.md`. Forge never treats credit as a substitute for permission and never claims that a machine check authenticates legal ownership.
+
+## FOMOD engineering
+
+Forge 4.2.0 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
+
+C# scripted FOMOD installers are deliberately unsupported because they permit arbitrary code execution. See `docs/FOMOD-ENGINEERING.md`.
 
 ## xEdit automation
 
@@ -66,11 +109,20 @@ forge doctor
 forge discover-tools
 forge config-show
 forge lint <ModFolder>
+forge fomod-scaffold <PayloadRoot> <Workspace>/fomod.plan.json --module-name "My Mod" --approve
+forge fomod-plan-validate <Workspace>/fomod.plan.json --source-root <PayloadRoot>
+forge fomod-simulate <Workspace>/fomod.plan.json --selections selections.json --state state.json --source-root <PayloadRoot>
+forge fomod-build <Workspace>/fomod.plan.json <PayloadRoot> <Workspace>/BuiltFomod --approve
+forge fomod-validate <Workspace>/BuiltFomod
 forge plugin-info <Plugin.esp>
 forge record-query <Plugin.esp> --signature SPEL --editor-id Bound
 forge plugin-plan-validate examples/plugin-create.plan.json
 forge automation-validate examples/automation-xedit-check.job.json
 forge automation-run <job.json> --approve
+forge nexus-policy-status
+forge nexus-scaffold <ReleaseRoot> <Workspace>/NEXUS-PUBLICATION-PLAN.json --mod-name "My Mod" --mod-version 1.0.0 --uploader "Author" --approve
+forge nexus-audit <Workspace>/NEXUS-PUBLICATION-PLAN.json <ReleaseRoot>
+forge nexus-build <Workspace>/NEXUS-PUBLICATION-PLAN.json <ReleaseRoot> <Workspace>/NexusPublication --approve
 ```
 
 ## Readiness levels
@@ -97,3 +149,21 @@ Forge reports what each result actually proves:
 ## Repository
 
 The repository includes deterministic packaging, CI, CodeQL, issue templates, security policy, tests, schemas, native helper source, Windows and Linux native binaries, and GitHub release automation.
+
+## Forge 4.2 evidence tiers
+
+Forge reports each subsystem as direct, profiled, adapter, worker contract, human gate or unsupported. Query `forge capabilities` before using an external-tool workflow. Static lint, compiler acceptance, native compilation, xEdit parsing and Skyrim runtime are distinct evidence levels.
+
+### Shareable and Nexus releases
+
+Public intent automatically requires the Nexus publication plan and rights gate. Every bundled file must be mapped to ownership/licence/permission evidence; credits, third-party notices, AI disclosure, permission recommendations and a private audit are generated only after the gate passes. Forge never signs the uploader attestation and does not provide legal advice.
+
+### Papyrus and native plugins
+
+`forge papyrus-analyze` reports identity/import/inheritance errors and review-only performance heuristics. `forge papyrus-compile` uses a hash-pinned compiler and verifies fresh PEX output. Native DLL projects use a source-locked CommonLibSSE-NG scaffold, exactly one compatibility strategy, pinned build tools, workspace-only staging and PE audit. Real Skyrim testing is still mandatory.
+
+## Verified external tools
+
+Forge 4.2 recursively discovers real tools in directories and ZIPs, including tools nested inside another package such as `ESLifier/bsarch/BSArch.exe`. Use `forge tool-scan`, then `forge tool-import` or `forge tool-configure`. Imported tools are copied only into the local Forge tool vault, accompanied by hashes and receipts. Third-party executables are never added to the public Forge repository or a mod release. See `docs/TOOLCHAIN-BROKER.md`.
+
+Forge selects tools by an exact capability and a valid SHA-256 pin. It will not substitute `Synthesis.exe` for `Synthesis.Bethesda.CLI.exe`, or a generic archive utility for a Skyrim SE/AE BSA operation.

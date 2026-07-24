@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "3.0.2"
+VERSION = "4.2.0"
 EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
@@ -64,7 +64,13 @@ def validate_files(errors: list[str], warnings: list[str]) -> dict[str, Any]:
             elif suffix == ".json": counts["json"] += 1; json.loads(path.read_text(encoding="utf-8-sig"), parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
             elif suffix == ".toml": counts["toml"] += 1; tomllib.loads(path.read_text(encoding="utf-8-sig"))
             elif suffix == ".xml": counts["xml"] += 1; ET.parse(path)
-            elif suffix in {".yaml", ".yml"}: counts["yaml"] += 1
+            elif suffix in {".yaml", ".yml"}:
+                counts["yaml"] += 1
+                try:
+                    import yaml
+                    yaml.safe_load(path.read_text(encoding="utf-8-sig"))
+                except ImportError:
+                    warnings.append("PyYAML unavailable; workflow YAML syntax parsing skipped")
             elif suffix == ".ps1": counts["powershell"] += 1
             elif suffix == ".go": counts["go"] += 1
             elif suffix == ".pas": counts["pascal"] += 1
@@ -81,26 +87,66 @@ def validate_files(errors: list[str], warnings: list[str]) -> dict[str, Any]:
                     if not re.fullmatch(r"[0-9a-f]{40}", ref): errors.append(f"floating GitHub Action in {rel}: {match.group(1)}")
     required = [
         "README.md", "LICENSE", "SECURITY.md", "CONTRIBUTING.md", "PUBLISH-TO-GITHUB.md",
-        "schemas/automation-job.schema.json", "resources/xedit/SkyrimForgeCheckErrors.pas",
+        "docs/AUTOMATION-FABRIC.md", "docs/CAPABILITY-MATRIX.md", "docs/FOMOD-ENGINEERING.md",
+        "docs/FRAMEWORK-ENGINEERING.md", "docs/NATIVE-PLUGIN-ENGINEERING.md", "docs/NATIVE-SOURCE-LOCK.md",
+        "docs/NEXUS-PUBLICATION.md", "docs/PAPYRUS-ENGINEERING.md", "docs/PUBLICATION-COMPLIANCE.md",
+        "docs/TOOLCHAIN-BROKER.md",
+        "schemas/automation-job.schema.json", "schemas/external-worker-job.schema.json", "schemas/fomod-plan.schema.json",
+        "schemas/framework-plan.schema.json", "schemas/native-plugin-plan.schema.json", "schemas/nexus-publication-plan.schema.json",
+        "schemas/plugin-plan.schema.json", "schemas/ui-job.schema.json",
+        "references/AUTOMATION-SOURCE-LOCK.json", "references/ERROR-REGISTRY.json", "references/FOMOD-SOURCE-LOCK.json",
+        "references/FRAMEWORK-SOURCE-LOCK.json", "references/NATIVE-SOURCE-LOCK.json", "references/NEXUS-POLICY-LOCK.json",
+        "references/TOOL-CATALOG.json", "references/TOOLCHAIN-SOURCE-LOCK.json",
+        "resources/xedit/SkyrimForgeCheckErrors.pas", "resources/xedit/SkyrimForgeReportRecords.pas",
+        "skyrim_forge/capabilities.py", "skyrim_forge/framework_builder.py", "skyrim_forge/native.py", "skyrim_forge/nexus.py",
+        "skyrim_forge/papyrus.py", "skyrim_forge/selftest.py", "skyrim_forge/toolchain.py", "skyrim_forge/tool_adapters.py",
         "writer/published/win-x64/SkyrimForge.Native.exe", "writer/published/linux-x64/SkyrimForge.Native",
         "skyrim_forge/bin/win-x64/SkyrimForge.Native.exe", "skyrim_forge/bin/linux-x64/SkyrimForge.Native",
     ]
     for rel in required:
-        if not (ROOT/rel).is_file(): errors.append(f"required file missing: {rel}")
-    for name in ("automation-job.schema.json", "plugin-plan.schema.json", "external-worker-job.schema.json", "ui-job.schema.json"):
-        if (ROOT/"schemas"/name).read_bytes() != (ROOT/"skyrim_forge"/"schemas"/name).read_bytes(): errors.append(f"schema copies differ: {name}")
+        if not (ROOT / rel).is_file():
+            errors.append(f"required file missing: {rel}")
+    schema_names = (
+        "automation-job.schema.json", "plugin-plan.schema.json", "external-worker-job.schema.json", "ui-job.schema.json",
+        "fomod-plan.schema.json", "framework-plan.schema.json", "native-plugin-plan.schema.json", "nexus-publication-plan.schema.json",
+    )
+    for name in schema_names:
+        if (ROOT / "schemas" / name).read_bytes() != (ROOT / "skyrim_forge" / "schemas" / name).read_bytes():
+            errors.append(f"schema copies differ: {name}")
     for name in ("SkyrimForgeCheckErrors.pas", "SkyrimForgeReportRecords.pas"):
-        if (ROOT/"resources"/"xedit"/name).read_bytes() != (ROOT/"skyrim_forge"/"resources"/"xedit"/name).read_bytes(): errors.append(f"xEdit resource copies differ: {name}")
-    return {"file_count":len(repository_files()),"counts":counts}
+        if (ROOT / "resources" / "xedit" / name).read_bytes() != (ROOT / "skyrim_forge" / "resources" / "xedit" / name).read_bytes():
+            errors.append(f"xEdit resource copies differ: {name}")
+    reference_names = ("AUTOMATION-SOURCE-LOCK.json", "ERROR-REGISTRY.json", "FOMOD-SOURCE-LOCK.json", "FRAMEWORK-SOURCE-LOCK.json", "NATIVE-SOURCE-LOCK.json", "NEXUS-POLICY-LOCK.json", "TOOL-CATALOG.json", "TOOLCHAIN-SOURCE-LOCK.json", "PLUGIN-INVARIANTS.md")
+    for name in reference_names:
+        if (ROOT / "references" / name).read_bytes() != (ROOT / "skyrim_forge" / "references" / name).read_bytes():
+            errors.append(f"reference copies differ: {name}")
+    documentation_names = ("AUTOMATION-FABRIC.md", "CAPABILITY-MATRIX.md", "FOMOD-ENGINEERING.md", "FRAMEWORK-ENGINEERING.md", "NATIVE-PLUGIN-ENGINEERING.md", "NATIVE-SOURCE-LOCK.md", "NEXUS-PUBLICATION.md", "PAPYRUS-ENGINEERING.md", "PUBLICATION-COMPLIANCE.md", "TOOLCHAIN-BROKER.md")
+    for name in documentation_names:
+        if (ROOT / "docs" / name).read_bytes() != (ROOT / "skyrim_forge" / "docs" / name).read_bytes():
+            errors.append(f"packaged documentation differs: {name}")
+    catalog = json.loads((ROOT / "references" / "TOOL-CATALOG.json").read_text(encoding="utf-8"))
+    if any(item.get("public_bundle_allowed") for item in catalog.get("tools", [])):
+        errors.append("tool catalog permits public third-party executable bundling")
+    forbidden_tool_names = {name.casefold() for item in catalog.get("tools", []) for name in item.get("names", [])}
+    bundled_tools = [
+        path.relative_to(ROOT).as_posix() for path in repository_files()
+        if path.name.casefold() in forbidden_tool_names and "writer/published/" not in path.relative_to(ROOT).as_posix().casefold()
+    ]
+    if bundled_tools:
+        errors.append("third-party catalog executables bundled in repository: " + ", ".join(bundled_tools))
+    return {"file_count":len(repository_files()),"counts":counts,"third_party_binary_bundling":"disabled"}
 
 
 def validate_python(errors: list[str]) -> dict[str, Any]:
-    compile_result = run([sys.executable,"-m","compileall","-q","skyrim_forge","tests","scripts"])
-    tests = run([sys.executable,"-m","unittest","discover","-s","tests","-v"], timeout=900)
+    compile_result = run([sys.executable, "-m", "compileall", "-q", "skyrim_forge", "tests", "scripts"])
+    tests = run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], timeout=900)
+    self_test = run([sys.executable, "-m", "skyrim_forge", "self-test"], timeout=300)
     if compile_result["returncode"]: errors.append("Python compileall failed")
     if tests["returncode"]: errors.append("Python unit tests failed")
+    if self_test["returncode"]: errors.append("Forge built-in self-test failed")
     count_match = re.search(r"Ran (\d+) tests", tests["stderr"] + tests["stdout"])
-    return {"compile":compile_result,"tests":tests,"test_count":int(count_match.group(1)) if count_match else None,"result":"PASS" if not compile_result["returncode"] and not tests["returncode"] else "FAIL"}
+    passed = not compile_result["returncode"] and not tests["returncode"] and not self_test["returncode"]
+    return {"compile": compile_result, "tests": tests, "self_test": self_test, "test_count": int(count_match.group(1)) if count_match else None, "result": "PASS" if passed else "FAIL"}
 
 
 def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
@@ -108,54 +154,48 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         warnings.append("Go unavailable; native source and reproducibility checks skipped")
         return {"result":"NOT-RUN"}
     cwd = ROOT/"writer"/"native-go"
-    fmt = run(["gofmt","-l","."],cwd=cwd); vet=run(["go","vet","./..."],cwd=cwd); tests=run(["go","test","./..."],cwd=cwd)
+    fmt = run(["gofmt","-l","."],cwd=cwd); vet=run(["go","vet","./..."],cwd=cwd); tests=run(["go","test","./..."],cwd=cwd); race=run(["go","test","-race","./..."],cwd=cwd)
     if fmt["returncode"] or fmt["stdout"].strip(): errors.append("gofmt failed")
     if vet["returncode"]: errors.append("go vet failed")
     if tests["returncode"]: errors.append("go tests failed")
+    if race["returncode"]: errors.append("go race tests failed")
     builds={}
-    # Windows product gate only: rebuild the Windows helper twice and match the published PE.
     with tempfile.TemporaryDirectory() as td:
         td=Path(td)
-        env={"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}
-        a=td/"windows-a.exe"; b=td/"windows-b.exe"
-        for output in (a,b):
-            result=run(["go","build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
-            if result["returncode"]: errors.append("windows native build failed")
-        if a.exists() and b.exists():
-            bundled=ROOT/"writer"/"published"/"win-x64"/"SkyrimForge.Native.exe"
-            first, second, published = sha256(a), sha256(b), sha256(bundled)
-            ok = first == second == published
-            builds["windows"]={"first":first,"second":second,"bundled":published,"result":"PASS" if ok else "FAIL"}
-            if first != second:
-                errors.append("windows native rebuild is not deterministic")
-            elif first != published:
-                errors.append("windows native binary is not reproducible")
-    hard = ["gofmt failed","go vet failed","go tests failed","windows native build failed","windows native rebuild is not deterministic","windows native binary is not reproducible"]
-    return {"format":fmt,"vet":vet,"tests":tests,"builds":builds,"result":"PASS" if not any(x in errors for x in hard) and all(x.get("result")=="PASS" for x in builds.values()) else "FAIL"}
+        for target, env in {"linux":{"CGO_ENABLED":"0","GOOS":"linux","GOARCH":"amd64"},"windows":{"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}}.items():
+            suffix=".exe" if target=="windows" else ""; a=td/f"{target}-a{suffix}"; b=td/f"{target}-b{suffix}"
+            for output in (a,b):
+                result=run(["go","build","-trimpath","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
+                if result["returncode"]: errors.append(f"{target} native build failed")
+            if a.exists() and b.exists():
+                bundled=ROOT/"writer"/"published"/("win-x64" if target=="windows" else "linux-x64")/("SkyrimForge.Native.exe" if target=="windows" else "SkyrimForge.Native")
+                builds[target]={"first":sha256(a),"second":sha256(b),"bundled":sha256(bundled),"result":"PASS" if sha256(a)==sha256(b)==sha256(bundled) else "FAIL"}
+                if builds[target]["result"]!="PASS": errors.append(f"{target} native binary is not reproducible")
+    return {"format":fmt,"vet":vet,"tests":tests,"race":race,"builds":builds,"result":"PASS" if not any(x in errors for x in ["gofmt failed","go vet failed","go tests failed","go race tests failed"]) and all(x.get("result")=="PASS" for x in builds.values()) else "FAIL"}
 
 
 def validate_native(errors: list[str], warnings: list[str]) -> dict[str, Any]:
     linux = ROOT / "writer" / "published" / "linux-x64" / "SkyrimForge.Native"
     windows = ROOT / "writer" / "published" / "win-x64" / "SkyrimForge.Native.exe"
     report: dict[str, Any] = {
-        "hashes": {"linux": sha256(linux) if linux.is_file() else "", "windows": sha256(windows)},
-        "linux_elf": linux.is_file() and linux.read_bytes()[:4] == b"\x7fELF",
-        "windows_pe": windows.is_file() and windows.read_bytes()[:2] == b"MZ" and windows.stat().st_size > 0x40,
-        "focus": "windows",
+        "hashes": {"linux": sha256(linux), "windows": sha256(windows)},
+        "linux_elf": linux.read_bytes()[:4] == b"\x7fELF",
+        "windows_pe": windows.read_bytes()[:2] == b"MZ" and windows.stat().st_size > 0x40,
     }
+    if not report["linux_elf"]:
+        errors.append("Linux native helper is not an ELF executable")
     if not report["windows_pe"]:
         errors.append("Windows native helper is not a PE executable")
-    if not report["linux_elf"]:
-        warnings.append("Optional Linux native helper missing or not ELF; ignored for Windows product gate")
-    # Always exercise the Windows helper when present; that is the supported product path.
-    version = run([str(windows), "version"]) if report["windows_pe"] else {"returncode":1,"stdout":"","stderr":"missing","command":[]}
-    self_test = run([str(windows), "self-test"]) if report["windows_pe"] else {"returncode":1,"stdout":"","stderr":"missing","command":[]}
+    native = windows if os.name == "nt" else linux
+    platform_name = "windows" if os.name == "nt" else "linux"
+    version = run([str(native), "version"])
+    self_test = run([str(native), "self-test"])
     if version["returncode"] or version["stdout"].strip() != f"SkyrimForge.Native {VERSION} go":
-        errors.append("windows native version mismatch")
+        errors.append(f"{platform_name} native version mismatch")
     if self_test["returncode"] or "PASS" not in self_test["stdout"]:
-        errors.append("windows native self-test failed")
-    report.update({"executed_platform": "windows", "version": version, "self_test": self_test})
-    report["result"] = "PASS" if report["windows_pe"] and version["returncode"] == self_test["returncode"] == 0 else "FAIL"
+        errors.append(f"{platform_name} native self-test failed")
+    report.update({"executed_platform": platform_name, "version": version, "self_test": self_test})
+    report["result"] = "PASS" if report["linux_elf"] and report["windows_pe"] and version["returncode"] == self_test["returncode"] == 0 else "FAIL"
     return report
 
 
@@ -165,7 +205,22 @@ def validate_packaging(errors: list[str]) -> dict[str, Any]:
         wa=Path(a)/forge_build_backend.build_wheel(a); wb=Path(b)/forge_build_backend.build_wheel(b)
         wheel_hash=sha256(wa); wheel_equal=wheel_hash==sha256(wb); wheel_size=wa.stat().st_size
         with zipfile.ZipFile(wa) as archive: crc=archive.testzip(); members=set(archive.namelist())
-        required={"skyrim_forge/bin/win-x64/SkyrimForge.Native.exe","skyrim_forge/resources/xedit/SkyrimForgeCheckErrors.pas"}
+        required={
+            "skyrim_forge/bin/win-x64/SkyrimForge.Native.exe", "skyrim_forge/bin/linux-x64/SkyrimForge.Native",
+            "skyrim_forge/capabilities.py", "skyrim_forge/framework_builder.py", "skyrim_forge/native.py",
+            "skyrim_forge/nexus.py", "skyrim_forge/papyrus.py", "skyrim_forge/selftest.py",
+            "skyrim_forge/toolchain.py", "skyrim_forge/tool_adapters.py",
+            "skyrim_forge/resources/xedit/SkyrimForgeCheckErrors.pas",
+            "skyrim_forge/schemas/fomod-plan.schema.json", "skyrim_forge/schemas/framework-plan.schema.json",
+            "skyrim_forge/schemas/native-plugin-plan.schema.json", "skyrim_forge/schemas/nexus-publication-plan.schema.json",
+            "skyrim_forge/docs/FOMOD-ENGINEERING.md", "skyrim_forge/docs/FRAMEWORK-ENGINEERING.md",
+            "skyrim_forge/docs/NATIVE-PLUGIN-ENGINEERING.md", "skyrim_forge/docs/NEXUS-PUBLICATION.md",
+            "skyrim_forge/docs/PAPYRUS-ENGINEERING.md", "skyrim_forge/docs/PUBLICATION-COMPLIANCE.md",
+            "skyrim_forge/docs/TOOLCHAIN-BROKER.md",
+            "skyrim_forge/references/FRAMEWORK-SOURCE-LOCK.json", "skyrim_forge/references/NATIVE-SOURCE-LOCK.json",
+            "skyrim_forge/references/NEXUS-POLICY-LOCK.json",
+            "skyrim_forge/references/TOOL-CATALOG.json", "skyrim_forge/references/TOOLCHAIN-SOURCE-LOCK.json",
+        }
     with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
         sa=Path(a)/forge_build_backend.build_sdist(a); sb=Path(b)/forge_build_backend.build_sdist(b)
         sdist_hash=sha256(sa); sdist_equal=sdist_hash==sha256(sb); sdist_size=sa.stat().st_size
@@ -175,16 +230,39 @@ def validate_packaging(errors: list[str]) -> dict[str, Any]:
 
 
 def validate_mcp(errors: list[str]) -> dict[str, Any]:
-    initialize=json.dumps({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25"}})
-    tools=json.dumps({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}})
-    completed=subprocess.run([sys.executable,"-m","skyrim_forge","mcp"],cwd=ROOT,input=initialize+"\n"+tools+"\n",text=True,capture_output=True,timeout=30,shell=False,env={**os.environ,"HOME":tempfile.mkdtemp(prefix="forge-mcp-home-")})
+    requests = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-11-25"}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        {"jsonrpc": "2.0", "id": 3, "method": "resources/list", "params": {}},
+        {"jsonrpc": "2.0", "id": 4, "method": "prompts/list", "params": {}},
+    ]
+    completed = subprocess.run(
+        [sys.executable, "-m", "skyrim_forge", "mcp"], cwd=ROOT,
+        input="\n".join(json.dumps(item) for item in requests) + "\n",
+        text=True, capture_output=True, timeout=30, shell=False,
+        env={**os.environ, "HOME": tempfile.mkdtemp(prefix="forge-mcp-home-")},
+    )
     try:
-        responses=[json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
-        count=len(responses[1]["result"]["tools"])
-        passed=completed.returncode==0 and responses[0]["result"]["protocolVersion"]=="2025-11-25" and count>=18
-    except Exception: count=0; passed=False
-    if not passed: errors.append("MCP handshake/inventory failed")
-    return {"result":"PASS" if passed else "FAIL","tools":count,"stderr":completed.stderr}
+        responses = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+        tool_count = len(responses[1]["result"]["tools"])
+        resource_uris = {item["uri"] for item in responses[2]["result"]["resources"]}
+        prompt_names = {item["name"] for item in responses[3]["result"]["prompts"]}
+        required_resources = {
+            "forge://capabilities", "forge://schemas/framework-plan", "forge://schemas/native-plugin-plan",
+            "forge://schemas/nexus-publication-plan", "forge://references/framework-source-lock",
+            "forge://references/native-source-lock", "forge://references/nexus-policy-lock",
+            "forge://docs/toolchain-broker", "forge://references/tool-catalog",
+        }
+        required_prompts = {"verify_mod_release", "build_fomod_installer", "prepare_nexus_release", "build_native_plugin", "build_framework_config", "configure_verified_toolchain"}
+        passed = (
+            completed.returncode == 0 and responses[0]["result"]["protocolVersion"] == "2025-11-25"
+            and tool_count >= 50 and required_resources.issubset(resource_uris) and required_prompts.issubset(prompt_names)
+        )
+    except Exception:
+        tool_count = 0; resource_uris = set(); prompt_names = set(); passed = False
+    if not passed:
+        errors.append("MCP handshake/inventory failed")
+    return {"result": "PASS" if passed else "FAIL", "tools": tool_count, "resources": sorted(resource_uris), "prompts": sorted(prompt_names), "stderr": completed.stderr}
 
 
 def validate_powershell(errors: list[str], warnings: list[str]) -> dict[str, Any]:
@@ -219,9 +297,9 @@ def write_reports(report: dict[str, Any]) -> None:
     man=manifest(); (ROOT/"MANIFEST.json").write_text(json.dumps(man,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     binaries=[ROOT/"writer"/"published"/"linux-x64"/"SkyrimForge.Native",ROOT/"writer"/"published"/"win-x64"/"SkyrimForge.Native.exe"]
     (ROOT/"CHECKSUMS-SHA256.txt").write_text("\n".join(f"{sha256(p)}  {p.relative_to(ROOT).as_posix()}" for p in binaries)+"\n",encoding="utf-8")
-    receipt={"product":"Skyrim Forge","version":VERSION,"result":report["result"],"native":report["checks"]["native"],"go":report["checks"]["go"],"mcp":report["checks"]["mcp"],"limitations":["Windows native helper and PowerShell installers require Windows execution; GitHub CI performs that gate.","Installed xEdit, MO2, LOOT, Wrye Bash, Creation Kit, CKPE, and Papyrus tools require local configuration and legal installations.","No Skyrim runtime, save, visual, navmesh, animation, or gameplay validation was performed in this environment."]}
+    receipt={"product":"Skyrim Forge","version":VERSION,"result":report["result"],"native":report["checks"]["native"],"go":report["checks"]["go"],"mcp":report["checks"]["mcp"],"limitations":["Windows native helper and PowerShell installers require Windows execution; GitHub CI performs that gate.","Third-party modding tools are not bundled. Their legal local installations may be discovered, imported into the private tool vault when allowed, SHA-256 pinned, and selected only for exact catalog capabilities.","No Skyrim runtime, save, visual, navmesh, animation, or gameplay validation was performed in this environment.","Nexus publication checks validate declared evidence and machine-checkable policy gates; they do not authenticate legal ownership or replace the uploader's responsibility."]}
     (ROOT/"BUILD-RECEIPT.json").write_text(json.dumps(portable(receipt),indent=2,sort_keys=True)+"\n",encoding="utf-8")
-    sbom={"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":f"Skyrim-Forge-{VERSION}","documentNamespace":f"https://example.invalid/skyrim-forge/{VERSION}/spdx","creationInfo":{"created":"2026-07-23T00:00:00Z","creators":[f"Tool: Skyrim Forge validator {VERSION}"]},"packages":[{"name":"Skyrim Forge","SPDXID":"SPDXRef-Package","versionInfo":VERSION,"downloadLocation":"NOASSERTION","filesAnalyzed":True,"licenseConcluded":"MIT","licenseDeclared":"MIT","copyrightText":"NOASSERTION"}],"files":[{"fileName":"./"+f["path"],"SPDXID":"SPDXRef-File-"+re.sub(r"[^A-Za-z0-9.-]","-",f["path"]),"checksums":[{"algorithm":"SHA256","checksumValue":f["sha256"]}],"licenseConcluded":"NOASSERTION","licenseInfoInFiles":["NOASSERTION"],"copyrightText":"NOASSERTION"} for f in man["files"]]}
+    sbom={"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":f"Skyrim-Forge-{VERSION}","documentNamespace":f"https://example.invalid/skyrim-forge/{VERSION}/spdx","creationInfo":{"created":"2026-07-24T00:00:00Z","creators":[f"Tool: Skyrim Forge validator {VERSION}"]},"packages":[{"name":"Skyrim Forge","SPDXID":"SPDXRef-Package","versionInfo":VERSION,"downloadLocation":"NOASSERTION","filesAnalyzed":True,"licenseConcluded":"MIT","licenseDeclared":"MIT","copyrightText":"NOASSERTION"}],"files":[{"fileName":"./"+f["path"],"SPDXID":"SPDXRef-File-"+re.sub(r"[^A-Za-z0-9.-]","-",f["path"]),"checksums":[{"algorithm":"SHA256","checksumValue":f["sha256"]}],"licenseConcluded":"NOASSERTION","licenseInfoInFiles":["NOASSERTION"],"copyrightText":"NOASSERTION"} for f in man["files"]]}
     (ROOT/"SBOM.spdx.json").write_text(json.dumps(sbom,indent=2,sort_keys=True)+"\n",encoding="utf-8")
 
 

@@ -11,7 +11,7 @@ from .strictjson import load
 from .tools import resolve_tool, run_process
 from .util import json_dump, safe_name, sha256_file
 
-ALLOWED_WORKER_TYPES = {"loot", "wrye_bash", "creation_kit"}
+ALLOWED_WORKER_TYPES = {"loot", "wrye_bash", "creation_kit", "asset", "animation", "bodyslide", "lod", "grass_cache", "synthesis", "audio"}
 PATH_RESULT_FIELDS = {"plan_path", "output_plugin", "archive_path", "manifest_path", "log_path"}
 
 
@@ -55,7 +55,11 @@ def _validate_result_paths(payload: dict[str, Any], output_root: Path) -> None:
 
 def run_external_worker(config: ForgeConfig, job_path: Path, result_path: Path, cwd: Path) -> dict[str, Any]:
     job = validate_worker_job(load(job_path))
-    name = {"loot": "loot_worker", "wrye_bash": "wrye_worker", "creation_kit": "ck_worker"}[job["worker_type"]]
+    name = {
+        "loot": "loot_worker", "wrye_bash": "wrye_worker", "creation_kit": "ck_worker",
+        "asset": "asset_worker", "animation": "animation_worker", "bodyslide": "bodyslide_worker",
+        "lod": "lod_worker", "grass_cache": "grass_worker", "synthesis": "synthesis_worker", "audio": "audio_worker",
+    }[job["worker_type"]]
     tool, worker = resolve_tool(config, name, require_pin=True)
 
     cwd = require_within(cwd, config.workspace_root)

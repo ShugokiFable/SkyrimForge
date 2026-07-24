@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .errors import SafetyError, ValidationError
+from .fomod import validate_fomod
 from .safety import require_approval, require_within, validate_filename
 from .util import iter_files, sha256_file
 
@@ -45,6 +46,12 @@ def validate_release_tree(root: Path) -> dict[str, Any]:
                 if PRIVATE_WINDOWS_PATH.search(text):
                     errors.append(f"private Windows user path in release text: {rel}")
             files.append({"path": rel, "size": path.stat().st_size, "sha256": sha256_file(path)})
+    fomod_dirs = [path for path in root.iterdir() if path.is_dir() and path.name.casefold() == "fomod"]
+    fomod_report = None
+    if fomod_dirs:
+        fomod_report = validate_fomod(root, strict_coverage=True)
+        errors.extend(f"FOMOD: {item}" for item in fomod_report["errors"])
+        warnings.extend(f"FOMOD: {item}" for item in fomod_report["warnings"])
     return {
         "result": "PASS" if not errors else "FAIL",
         "root": str(root),
@@ -52,7 +59,11 @@ def validate_release_tree(root: Path) -> dict[str, Any]:
         "errors": sorted(set(errors)),
         "warnings": warnings,
         "files": files,
-        "evidence": "Release-tree hygiene only. Gameplay and runtime behavior are not validated.",
+        "fomod": fomod_report,
+        "target": "private",
+        "share_ready": False,
+        "publication_status": "PRIVATE_ONLY",
+        "evidence": "Release-tree hygiene only. This result is not Nexus/publication approval and must not be called share-ready. Gameplay and runtime behavior are not validated.",
     }
 
 
@@ -81,4 +92,14 @@ def build_release(root: Path, output: Path, workspace_root: Path, *, approved: b
             temporary.unlink(missing_ok=True)
             raise ValidationError(f"ZIP CRC failure: {bad}")
     os.replace(temporary, output)
-    return {"result": "PASS", "output": str(output), "size": output.stat().st_size, "sha256": sha256_file(output), "file_count": report["file_count"]}
+    return {
+        "result": "PASS",
+        "target": "private",
+        "share_ready": False,
+        "publication_status": "PRIVATE_ONLY",
+        "output": str(output),
+        "size": output.stat().st_size,
+        "sha256": sha256_file(output),
+        "file_count": report["file_count"],
+        "evidence": "Deterministic private archive only. Use target=nexus with a validated publication plan for share-ready status.",
+    }

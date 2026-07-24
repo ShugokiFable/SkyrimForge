@@ -11,10 +11,13 @@ from .creation_kit import run_ck_worker
 from .errors import SafetyError, ValidationError
 from .external_worker import run_external_worker
 from .frameworks import lint_paths
+from .framework_builder import build as build_framework
 from .loot import analyze_via_worker, apply_plan, compare_plan
 from .mo2 import capture_mo2_profile
-from .papyrus import compile_scripts
+from .papyrus import analyze_sources, compile_scripts
 from .plugin_writer import build_plugin
+from .native import audit_project as audit_native_project, build_project as build_native_project, scaffold as scaffold_native
+from .nexus import audit_plan as audit_nexus_plan, build_publication_bundle as build_nexus_bundle, load_and_validate_plan as load_nexus_plan
 from .release import build_release, validate_release_tree
 from .safety import require_approval, require_read, require_within
 from .strictjson import load
@@ -30,9 +33,11 @@ OPERATIONS = {
     "xedit_install_scripts", "xedit_check_errors", "xedit_run_approved_script",
     "mo2_snapshot", "vortex_snapshot", "loot_analyze", "loot_compare", "loot_apply",
     "wrye_build_bashed_patch", "creation_kit_worker", "ui_automation",
-    "papyrus_compile", "verify_release",
+    "papyrus_compile", "papyrus_analyze", "framework_build",
+    "native_scaffold", "native_audit", "native_build",
+    "nexus_audit", "nexus_build", "external_worker", "verify_release",
 }
-READ_ONLY = {"framework_lint", "release_validate", "xedit_check_errors", "loot_compare"}
+READ_ONLY = {"framework_lint", "release_validate", "xedit_check_errors", "loot_compare", "papyrus_analyze", "native_audit", "nexus_audit"}
 JOB_FIELDS = {"schema", "job_id", "operation", "inputs", "options", "outputs", "description"}
 
 
@@ -135,6 +140,54 @@ def run_job(config: ForgeConfig, job_path: Path, *, approved: bool = False, keep
                 imports=[_read(config, item, "Papyrus import") for item in options.get("imports", config.papyrus_imports)],
                 flags_file=_read(config, options.get("flags_file", config.papyrus_flags), "Papyrus flags"),
                 approved=approved,
+                optimize=bool(options.get("optimize", True)),
+            )
+        elif operation == "papyrus_analyze":
+            result = analyze_sources(
+                [_read(config, item, "Papyrus source") for item in inputs.get("scripts", [])],
+                imports=[_read(config, item, "Papyrus import") for item in options.get("imports", [])],
+            )
+        elif operation == "framework_build":
+            result = build_framework(
+                _read(config, inputs.get("plan"), "framework plan"),
+                _workspace(config, outputs.get("directory"), "framework output"),
+                config.workspace_root,
+                approved=approved,
+            )
+        elif operation == "native_scaffold":
+            result = scaffold_native(
+                _read(config, inputs.get("plan"), "native plan"),
+                _workspace(config, outputs.get("directory"), "native project output"),
+                config.workspace_root,
+                approved=approved,
+            )
+        elif operation == "native_audit":
+            result = audit_native_project(_read(config, inputs.get("project"), "native project"))
+        elif operation == "native_build":
+            result = build_native_project(
+                config,
+                _read(config, inputs.get("project"), "native project"),
+                _workspace(config, outputs.get("directory"), "native build output"),
+                approved=approved,
+                configuration=str(options.get("configuration", "Release")),
+            )
+        elif operation == "nexus_audit":
+            plan_path = _read(config, inputs.get("plan"), "Nexus publication plan")
+            result = audit_nexus_plan(load_nexus_plan(plan_path), _read(config, inputs.get("root"), "release root"), evidence_base=plan_path.parent)
+        elif operation == "nexus_build":
+            result = build_nexus_bundle(
+                _read(config, inputs.get("plan"), "Nexus publication plan"),
+                _read(config, inputs.get("root"), "release root"),
+                _workspace(config, outputs.get("directory"), "Nexus publication output"),
+                config.workspace_root,
+                approved=approved,
+            )
+        elif operation == "external_worker":
+            result = run_external_worker(
+                config,
+                _read(config, inputs.get("worker_job"), "external worker job"),
+                transaction.output_dir / "external-worker-result.json",
+                transaction.root,
             )
         elif operation == "verify_release":
             release_root = _read(config, inputs.get("root"), "release root")

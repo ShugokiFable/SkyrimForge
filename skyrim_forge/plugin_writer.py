@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 
 import os
+import re
 import struct
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,40 @@ from .util import atomic_write_bytes, sha256_file
 FORM_VERSION = 44
 HEDR_VERSION = 1.71
 ALLOWED_CREATE = {"KYWD", "GLOB", "FLST", "OTFT"}
+FORMKEY_RE = re.compile(r"^0x([0-9A-Fa-f]{1,6})~([^<>:\"/\\|?*]+\.(?:esm|esp|esl))$", re.I)
+
+
+def _validate_form_ref(value: Any, masters: list[str], editor_ids: set[str], label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError(f"{label} must be a FormKey string like 0x123~Master.esm or @EditorID")
+    ref = value.strip()
+    if ref.startswith("@"):
+        editor_id = ref[1:]
+        if editor_id.casefold() not in editor_ids:
+            raise ValidationError(f"{label} references unknown local EditorID: {editor_id!r}")
+        return "@" + editor_id
+    match = FORMKEY_RE.fullmatch(ref)
+    if not match:
+        raise ValidationError(f"{label} must use local FormKey notation 0xLOCAL~Plugin.ext; raw load-order FormIDs are forbidden")
+    local = int(match.group(1), 16)
+    if local > 0xFFFFFF:
+        raise ValidationError(f"{label} local FormID exceeds 24 bits")
+    plugin = match.group(2)
+    found = next((item for item in masters if item.casefold() == plugin.casefold()), None)
+    if found is None:
+        raise ValidationError(f"{label} origin plugin is not listed in masters: {plugin}")
+    return f"0x{local:X}~{found}"
+
+
+def _encode_form_ref(ref: str, masters: list[str], local_ids: dict[str, int], self_index: int) -> int:
+    if ref.startswith("@"):
+        return (self_index << 24) | local_ids[ref[1:].casefold()]
+    match = FORMKEY_RE.fullmatch(ref)
+    assert match is not None
+    local = int(match.group(1), 16)
+    plugin = match.group(2)
+    master_index = next(index for index, item in enumerate(masters) if item.casefold() == plugin.casefold())
+    return (master_index << 24) | local
 
 
 def _sub(signature: str, payload: bytes) -> bytes:
@@ -87,6 +122,10 @@ def validate_plan(plan: dict[str, Any]) -> dict[str, Any]:
         if editor_id.casefold() in editor_ids:
             raise ValidationError(f"duplicate editor_id: {editor_id}")
         editor_ids.add(editor_id.casefold())
+    normalized_operations=[]
+    for index, operation in enumerate(operations):
+        kind=operation["record"]
+        normalized=dict(operation)
         if kind == "GLOB":
             if not isinstance(operation.get("value"), (int, float)) or isinstance(operation.get("value"), bool):
                 raise ValidationError(f"GLOB operation {index} requires numeric value")
@@ -94,9 +133,13 @@ def validate_plan(plan: dict[str, Any]) -> dict[str, Any]:
                 raise ValidationError(f"GLOB operation {index} type must be f, s, or l")
         if kind in {"FLST", "OTFT"}:
             forms = operation.get("forms", [])
-            if not isinstance(forms, list) or not all(isinstance(item, int) and 0 <= item <= 0xFFFFFFFF for item in forms):
-                raise ValidationError(f"{kind} operation {index} forms must be 32-bit integers")
-    return plan
+            if not isinstance(forms, list):
+                raise ValidationError(f"{kind} operation {index} forms must be an array")
+            normalized["forms"]=[_validate_form_ref(item, masters, editor_ids, f"{kind} operation {index} form {form_index}") for form_index,item in enumerate(forms)]
+        normalized_operations.append(normalized)
+    normalized=dict(plan)
+    normalized["operations"]=normalized_operations
+    return normalized
 
 
 def build_plugin(plan_path: Path, output_root: Path, *, approved: bool) -> dict[str, Any]:
@@ -107,12 +150,14 @@ def build_plugin(plan_path: Path, output_root: Path, *, approved: bool) -> dict[
     if output.exists():
         raise SafetyError(f"Refusing to overwrite existing plugin: {output}")
     light = plan.get("plugin_type") in {"esl", "espfe"}
-    base_id = 0x800 if light else 0x800
+    base_id = 0x001 if light else 0x800
     max_id = 0xFFF if light else 0x00FFFFFF
-    self_index = len(plan.get("masters", []))
+    masters = plan.get("masters", [])
+    self_index = len(masters)
+    local_ids = {operation["editor_id"].casefold(): base_id + offset for offset, operation in enumerate(plan["operations"])}
     groups: dict[str, list[bytes]] = {}
     for offset, operation in enumerate(plan["operations"]):
-        local = base_id + offset
+        local = local_ids[operation["editor_id"].casefold()]
         if local > max_id:
             raise ValidationError("Plan exceeds available local FormID range")
         form_id = (self_index << 24) | local
@@ -123,13 +168,13 @@ def build_plugin(plan_path: Path, output_root: Path, *, approved: bool) -> dict[
             payload += _sub("FLTV", struct.pack("<f", float(operation["value"])))
         elif kind == "FLST":
             for form in operation.get("forms", []):
-                payload += _sub("LNAM", struct.pack("<I", form))
+                payload += _sub("LNAM", struct.pack("<I", _encode_form_ref(form, masters, local_ids, self_index)))
         elif kind == "OTFT":
             for form in operation.get("forms", []):
-                payload += _sub("INAM", struct.pack("<I", form))
+                payload += _sub("INAM", struct.pack("<I", _encode_form_ref(form, masters, local_ids, self_index)))
         groups.setdefault(kind, []).append(_record(kind, form_id, payload))
     body = b"".join(_group(kind, groups[kind]) for kind in sorted(groups))
-    header = _header(plan.get("masters", []), len(plan["operations"]), base_id + len(plan["operations"]), plan.get("author", "Skyrim Forge"), plan.get("description", "Generated by Skyrim Forge"), light)
+    header = _header(masters, len(plan["operations"]), base_id + len(plan["operations"]), plan.get("author", "Skyrim Forge"), plan.get("description", "Generated by Skyrim Forge"), light)
     transaction = output.with_name(f".{output.name}.forge.tmp")
     atomic_write_bytes(transaction, header + body)
     reopened = inspect_plugin_header(transaction)

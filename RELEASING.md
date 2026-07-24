@@ -8,3 +8,14 @@
 6. Build the wheel and source distribution twice and require identical hashes.
 7. Publish only from the validated tag commit.
 8. State separately which installed tools and Skyrim runtime tests were actually exercised.
+
+## Nexus Mods or other public redistribution
+
+When publication intent is present, run the target-specific rights gate before tagging or uploading:
+
+```text
+forge release-validate <release-root> --target nexus --publication-plan NEXUS-PUBLICATION-PLAN.json
+forge release-build <release-root> <output.zip> --target nexus --publication-plan NEXUS-PUBLICATION-PLAN.json --approve
+```
+
+A generic successful release-tree check proves packaging hygiene only. It must not be described as Nexus-ready. Store permission screenshots, messages, invoices, licence copies, and review notes outside the public archive; Forge hashes them into the private audit without publishing them.

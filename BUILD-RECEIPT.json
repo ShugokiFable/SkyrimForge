@@ -2,16 +2,16 @@
   "go": {
     "builds": {
       "linux": {
-        "bundled": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
-        "first": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
+        "bundled": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
+        "first": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
         "result": "PASS",
-        "second": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278"
+        "second": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d"
       },
       "windows": {
-        "bundled": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
-        "first": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7",
+        "bundled": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718",
+        "first": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718",
         "result": "PASS",
-        "second": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
+        "second": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718"
       }
     },
     "format": {
@@ -59,19 +59,50 @@
   },
   "limitations": [
     "Windows native helper and PowerShell installers require Windows execution; GitHub CI performs that gate.",
-    "Installed xEdit, MO2, LOOT, Wrye Bash, Creation Kit, CKPE, and Papyrus tools require local configuration and legal installations.",
-    "No Skyrim runtime, save, visual, navmesh, animation, or gameplay validation was performed in this environment."
+    "Third-party modding tools are not bundled. Their legal local installations may be discovered, imported into the private tool vault when allowed, SHA-256 pinned, and selected only for exact catalog capabilities.",
+    "No Skyrim runtime, save, visual, navmesh, animation, or gameplay validation was performed in this environment.",
+    "Nexus publication checks validate declared evidence and machine-checkable policy gates; they do not authenticate legal ownership or replace the uploader's responsibility."
   ],
   "mcp": {
+    "prompts": [
+      "build_compatibility_patch",
+      "build_fomod_installer",
+      "build_framework_config",
+      "build_native_plugin",
+      "configure_verified_toolchain",
+      "prepare_nexus_release",
+      "verify_mod_release"
+    ],
+    "resources": [
+      "forge://capabilities",
+      "forge://config",
+      "forge://docs/automation-fabric",
+      "forge://docs/capability-matrix",
+      "forge://docs/fomod",
+      "forge://docs/framework-engineering",
+      "forge://docs/native-plugin-engineering",
+      "forge://docs/nexus-publication",
+      "forge://docs/papyrus-engineering",
+      "forge://docs/toolchain-broker",
+      "forge://references/framework-source-lock",
+      "forge://references/native-source-lock",
+      "forge://references/nexus-policy-lock",
+      "forge://references/tool-catalog",
+      "forge://schemas/automation-job",
+      "forge://schemas/fomod-plan",
+      "forge://schemas/framework-plan",
+      "forge://schemas/native-plugin-plan",
+      "forge://schemas/nexus-publication-plan"
+    ],
     "result": "PASS",
     "stderr": "",
-    "tools": 19
+    "tools": 52
   },
   "native": {
     "executed_platform": "linux",
     "hashes": {
-      "linux": "147e90d287b520dc366a5b3b0d7c05878c9d06eb8b78595d78f29fda69b86278",
-      "windows": "27111a3f9eaf7b9fdb9fd4adb3b043d84d2885a98827213d72df0a4f12a112b7"
+      "linux": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
+      "windows": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718"
     },
     "linux_elf": true,
     "result": "PASS",
@@ -91,11 +122,11 @@
       ],
       "returncode": 0,
       "stderr": "",
-      "stdout": "SkyrimForge.Native 3.0.2 go\n"
+      "stdout": "SkyrimForge.Native 4.2.0 go\n"
     },
     "windows_pe": true
   },
   "product": "Skyrim Forge",
   "result": "PASS",
-  "version": "3.0.2"
+  "version": "4.2.0"
 }

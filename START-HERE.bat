@@ -1,11 +1,11 @@
 @echo off
 setlocal EnableExtensions
-title Skyrim Forge 3.0
+title Skyrim Forge 4.2
 :menu
 cls
 echo.
 echo ================================================================
-echo  SKYRIM FORGE 3.0 - AUTOMATION FABRIC
+echo  SKYRIM FORGE 4.2 - VERIFIED TOOLCHAIN FABRIC
 echo ================================================================
 echo.
 echo  1. Install or update Forge
@@ -17,12 +17,14 @@ echo  6. Register MCP with AI applications
 echo  7. Install or repair Forge xEdit scripts
 echo  8. Open Forge GUI
 echo  9. Run regression tests
+echo  T. Scan/import verified local tools
 echo  D. Open documentation
 echo  0. Exit
 echo.
-choice /C 123456789D0 /N /M "Choose: "
-if errorlevel 11 exit /b 0
-if errorlevel 10 start "" "%~dp0README.md"&goto menu
+choice /C 123456789TD0 /N /M "Choose: "
+if errorlevel 12 exit /b 0
+if errorlevel 11 start "" "%~dp0README.md"&goto menu
+if errorlevel 10 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Configure-Toolchain.ps1"&pause&goto menu
 if errorlevel 9 call "%~dp0Run Tests.bat"&goto menu
 if errorlevel 8 call "%~dp0Skyrim Forge GUI.bat"&goto menu
 if errorlevel 7 call "%~dp0Skyrim Forge.bat" automation-run "%~dp0examples\automation-install-xedit-scripts.job.json" --approve&pause&goto menu

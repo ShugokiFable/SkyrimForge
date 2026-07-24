@@ -171,4 +171,15 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
 
+    def test_private_release_can_never_claim_share_ready(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "release"
+            root.mkdir()
+            (root / "readme.txt").write_text("private", encoding="utf-8")
+            report = validate_release_tree(root)
+            self.assertEqual(report["result"], "PASS")
+            self.assertFalse(report["share_ready"])
+            self.assertEqual(report["publication_status"], "PRIVATE_ONLY")
+
+
 if __name__ == "__main__": unittest.main()

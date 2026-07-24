@@ -14,9 +14,13 @@ KID_TYPES = {
 }
 KID_SIGNATURES = {"WEAP", "ARMO", "AMMO", "MGEF", "ALCH", "SCRL", "LCTN", "INGR", "BOOK", "MISC", "KEYM", "SLGM", "SPEL", "ACTI", "FLOR", "FURN", "RACE", "TACT", "ENCH"}
 SPID_TYPES = {"Form", "Spell", "Perk", "Item", "Shout", "LevSpell", "Package", "Outfit", "Keyword", "Faction", "SleepOutfit", "Skin"}
+# These are demonstrated generator mistakes, not merely unknown future syntax.
+SPID_KNOWN_INVALID_KEYS = {"Weapon"}
 SPID_TRAITS = {"M", "-F", "F", "-M", "U", "-U", "S", "-S", "C", "-C", "L", "-L", "T", "-T", "D", "-D"}
 SKYPATCHER_CATEGORIES = {"npc", "weapon", "armor", "ammo", "race", "spell", "scroll", "alchemy", "book", "cell", "constructibleobject", "container", "enchantment", "formlist", "leveledlist", "location", "magiceffect", "other"}
 BOS_SECTIONS = {"forms", "references", "transforms", "properties"}
+FLM_KEYS = {"alias", "group", "collection", "filter", "modevent", "modeventremove", "formlist", "remove", "plant", "btoys", "gtoys", "haircolors", "atronachforge", "atronachforgesigil", "dragonbornspidercrafting"}
+PROFILE_EVIDENCE = {"spid": "SPID 7.3 documented grammar subset", "kid": "KID 4.0.6 documented grammar subset", "bos": "BOS 3.4.1 documented core grammar", "skypatcher": "SkyPatcher 6.4.2 placement and core rule shape", "flm": "FLM 1.8.1 documented core grammar", "cdf": "Pinned CDF JSON subset"}
 
 
 def _strip_inline_comment(line: str) -> str:
@@ -66,9 +70,49 @@ def _spid_key(key: str) -> tuple[str, str]:
         death = True
         work = work[5:]
     if work not in SPID_TYPES:
-        return "invalid", work
+        return ("invalid" if work in SPID_KNOWN_INVALID_KEYS else "unverified"), work
     return "linked" if linked else "ordinary", work
 
+
+
+def _spid_numeric_range(text: str, *, allow_single: bool, label: str) -> str | None:
+    value = text.strip()
+    if allow_single and re.fullmatch(r"\d+", value):
+        return None
+    match = re.fullmatch(r"(\d+)/(\d*)", value)
+    if not match:
+        return f"Malformed SPID {label} range {text!r}"
+    minimum = int(match.group(1))
+    maximum_text = match.group(2)
+    if maximum_text and minimum > int(maximum_text):
+        return f"SPID {label} range minimum exceeds maximum: {text!r}"
+    return None
+
+
+def _lint_spid_level_filters(value: str, line: int) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    actor_ranges = 0
+    for raw_token in value.split(","):
+        token = raw_token.strip()
+        if not token or token.upper() == "NONE":
+            continue
+        skill = re.fullmatch(r"(w?)(\d{1,2})\(([^()]*)\)", token, flags=re.I)
+        if skill:
+            index = int(skill.group(2))
+            if not 0 <= index <= 17:
+                issues.append({"severity": "error", "line": line, "message": f"SPID skill index outside 0-17: {token!r}"})
+                continue
+            problem = _spid_numeric_range(skill.group(3), allow_single=False, label="skill")
+            if problem:
+                issues.append({"severity": "error", "line": line, "message": problem})
+            continue
+        actor_ranges += 1
+        problem = _spid_numeric_range(token, allow_single=True, label="actor level")
+        if problem:
+            issues.append({"severity": "error", "line": line, "message": problem})
+    if actor_ranges > 1:
+        issues.append({"severity": "warning", "line": line, "message": "SPID accepts only one actor-level expression; only the last one is used"})
+    return issues
 
 def _lint_spid(path: Path) -> list[dict[str, Any]]:
     issues = []
@@ -82,7 +126,10 @@ def _lint_spid(path: Path) -> list[dict[str, Any]]:
         family, base = _spid_key(key)
         fields = [part.strip() for part in value.split("|")]
         if family == "invalid":
-            issues.append({"severity": "error", "line": number, "message": f"Invalid SPID key {key!r}"})
+            issues.append({"severity": "error", "line": number, "message": f"Known invalid SPID key {key!r}; use the documented distribution key for the form being distributed"})
+            continue
+        if family == "unverified":
+            issues.append({"severity": "warning", "line": number, "message": f"SPID key {key!r} is outside Forge's pinned 7.3 profile; preserve it and verify against the installed SPID documentation/runtime log"})
             continue
         expected = (2, 2) if family == "exclusive" else ((1, 4) if family == "linked" else (1, 7))
         if not expected[0] <= len(fields) <= expected[1]:
@@ -92,12 +139,7 @@ def _lint_spid(path: Path) -> list[dict[str, Any]]:
             fields += [""] * (7 - len(fields))
             level, traits, count, chance = fields[3], fields[4], fields[5], fields[6]
             if level and level.upper() != "NONE":
-                for token in level.split(","):
-                    token = token.strip()
-                    if "/" in token:
-                        parts = token.split("/")
-                        if len(parts) != 2 or not all(parts) or not all(part.isdigit() for part in parts):
-                            issues.append({"severity": "error", "line": number, "message": f"Malformed SPID level range {token!r}"})
+                issues.extend(_lint_spid_level_filters(level, number))
             if traits and traits.upper() != "NONE":
                 for token in traits.split("/"):
                     if token.strip() not in SPID_TRAITS:
@@ -197,11 +239,43 @@ def _lint_cdf(path: Path) -> list[dict[str, Any]]:
 
 def _lint_skypatcher(path: Path) -> list[dict[str, Any]]:
     parts = [part.casefold() for part in path.parts]
-    issues = []
+    issues: list[dict[str, Any]] = []
     if "skypatcher" in parts:
         index = parts.index("skypatcher")
-        if index + 1 >= len(parts) - 1 or parts[index + 1] not in SKYPATCHER_CATEGORIES:
-            issues.append({"severity": "error", "line": 0, "message": "SkyPatcher config is not inside a supported category directory"})
+        if index + 1 >= len(parts) - 1:
+            issues.append({"severity": "error", "line": 0, "message": "SkyPatcher INI must be beneath a category directory"})
+        elif parts[index + 1] not in SKYPATCHER_CATEGORIES:
+            issues.append({"severity": "warning", "line": 0, "message": f"SkyPatcher category {parts[index + 1]!r} is not in Forge's pinned profile; leave unchanged until checked against the installed version"})
+    for number, line in _active(path):
+        if line.startswith("["):
+            issues.append({"severity": "warning", "line": number, "message": "Sectioned SkyPatcher syntax is outside Forge's core rule profile and was not semantically validated"})
+            continue
+        if ":" not in line:
+            issues.append({"severity": "warning", "line": number, "message": "SkyPatcher line is outside the modeled filter:patch rule shape; verify with the category documentation/runtime log"})
+            continue
+        left, right = line.split(":", 1)
+        if not left.strip() or not right.strip():
+            issues.append({"severity": "error", "line": number, "message": "SkyPatcher rule requires non-empty filter and patch sides"})
+        for side_name, side in (("filter", left), ("patch", right)):
+            for token in side.split(","):
+                if token.strip() and "=" not in token:
+                    issues.append({"severity": "warning", "line": number, "message": f"SkyPatcher {side_name} token lacks '=' and is outside the modeled profile: {token.strip()!r}"})
+    return issues
+
+
+def _lint_flm(path: Path) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    for number, line in _active(path):
+        if "=" not in line:
+            issues.append({"severity": "error", "line": number, "message": "FLM line lacks ="})
+            continue
+        key, value = [part.strip() for part in line.split("=", 1)]
+        if key.casefold() not in FLM_KEYS:
+            issues.append({"severity": "warning", "line": number, "message": f"FLM key {key!r} is not in Forge's 1.8.1 core profile; verify before editing"})
+        if not value:
+            issues.append({"severity": "error", "line": number, "message": f"FLM {key} has no value"})
+        if key.casefold() in {"formlist", "remove", "modevent", "modeventremove", "alias", "collection", "filter"} and "|" not in value:
+            issues.append({"severity": "error", "line": number, "message": f"FLM {key} requires pipe-delimited fields"})
     return issues
 
 
@@ -215,8 +289,10 @@ def lint_file(path: Path) -> list[dict[str, Any]]:
         return _lint_bos(path)
     if path.suffix.casefold() == ".json" and "cdf" in name:
         return _lint_cdf(path)
-    if path.suffix.casefold() in {".ini", ".json"} and "skypatcher" in [part.casefold() for part in path.parts]:
+    if path.suffix.casefold() == ".ini" and "skypatcher" in [part.casefold() for part in path.parts]:
         return _lint_skypatcher(path)
+    if name.endswith("_flm.ini") or (path.suffix.casefold() == ".ini" and "flm" in [part.casefold() for part in path.parts]):
+        return _lint_flm(path)
     return []
 
 
@@ -241,7 +317,8 @@ def lint_paths(paths: list[Path]) -> dict[str, Any]:
         "errors": errors,
         "warnings": warnings,
         "reports": reports,
-        "evidence": "Static framework grammar and placement validation. Runtime form resolution and logs remain separate.",
+        "profiles": PROFILE_EVIDENCE,
+        "evidence": "Static version-profile grammar and placement validation. Unknown/version-specific syntax is warning-level where possible. Runtime form resolution and logs remain separate.",
     }
 
 
@@ -251,8 +328,10 @@ def self_test() -> dict[str, Any]:
         root = Path(temporary)
         good = root / "good_DISTR.ini"
         good.write_text("DeathItem = 0x123~A.esp||||||18! ; comment\nExclusiveGroup = G|0x123~A.esp\n", encoding="utf-8")
+        composite = root / "composite_DISTR.ini"
+        composite.write_text("Perk = 0x1~A.esp|||25/255,0(55/255)|||100\n", encoding="utf-8")
         bad = root / "bad_DISTR.ini"
-        bad.write_text("Weapon = 0x1~A.esp|||65/|||10\n", encoding="utf-8")
+        bad.write_text("Weapon = 0x1~A.esp|||10/24,0(25)|||10\n", encoding="utf-8")
         kid = root / "test_KID.ini"
         kid.write_text("ExclusiveGroup = G|A,B\nKeyword = MyKeyword|Weapon|||100\n", encoding="utf-8")
         kid_bad = root / "bad_KID.ini"
@@ -261,7 +340,8 @@ def self_test() -> dict[str, Any]:
         bos.write_text("[Transforms]\n0x1~A.esp|rotR(147.9, 355.9, 82.7)\n", encoding="utf-8")
         assertions = {
             "spid_special_keys": not _lint_spid(good),
-            "spid_invalid_weapon_and_range": bool(_lint_spid(bad)),
+            "spid_actor_and_skill_range": not _lint_spid(composite),
+            "spid_single_value_skill_rejected": bool(_lint_spid(bad)),
             "kid_exclusive_and_type": not _lint_kid(kid),
             "kid_signature_rejected": bool(_lint_kid(kid_bad)),
             "bos_whitespace_rejected": bool(_lint_bos(bos)),

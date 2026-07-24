@@ -1,9 +1,9 @@
 ---
 name: skyrim-forge
-description: Use Skyrim Forge 3.0 as the primary typed automation broker for Skyrim mod development and validation.
+description: Use Skyrim Forge 4.2 as the primary typed automation broker for Skyrim mod development and validation.
 ---
 
-# Skyrim Forge 3.0
+# Skyrim Forge 4.2
 
 Run `forge doctor` before major Skyrim work.
 
@@ -11,6 +11,8 @@ Use Forge inspection and typed jobs before inventing one-off scripts. Never laun
 
 Hard rules:
 
+- Query `forge capabilities` before promising a subsystem. Adapter-only and worker-contract capabilities are not bundled implementation.
+- Use `papyrus-analyze` before `papyrus-compile`; compilation requires a hash-pinned Bethesda compiler, flags, imports, fresh PEX output and the generated build manifest. Static optimization warnings are never authority to change semantics.
 - Never send arbitrary shell commands through Forge.
 - Never write to live Skyrim Data, Vortex staging, MO2 mods, Overwrite, profiles, or saves.
 - Treat `read_only_ready` as a healthy inspection state.
@@ -23,6 +25,11 @@ Hard rules:
 - Tool disagreement means stop and classify.
 - xEdit evidence is not Skyrim runtime evidence.
 - Creation Kit output is not visual validation.
+- Treat framework runtime logs as stronger evidence than a static lint rule when the log proves the exact row parsed and distributed. Stop and classify the disagreement instead of silently rewriting working syntax.
+- SPID actor-level and skill expressions are distinct. `25/255,0(55/255)` is a valid actor range plus skill range; `0(25)` is not a valid min/max skill expression.
+- For FOMOD work, use `fomod-scaffold`, `fomod-plan-validate`, `fomod-simulate`, `fomod-build`, and `fomod-validate`. Do not hand-write ModuleConfig XML when the typed plan can represent the installer.
+- Require strict FOMOD payload coverage and branch simulation before packaging. Preserve all previous installer choices unless their removal is documented and approved.
+- Never generate or execute arbitrary C# FOMOD scripts. Standard typed XML support is the safe boundary.
 
 For a release, prefer this chain:
 
@@ -32,7 +39,40 @@ plugin/header and record inspection
 xEdit fixed-script check when configured
 Papyrus freshness verification
 asset/release-tree validation
+FOMOD plan validation, branch simulation, and generated-tree validation when applicable
 semantic diff
 package to a new version
 report remaining in-game tests
 ```
+
+## Public and Nexus Mods releases
+
+Treat any user request containing **shareable**, **public release**, **publish**, **Nexus**, **upload**, **release page**, or equivalent intent as a publication workflow, not ordinary ZIP creation.
+
+Required sequence:
+
+1. Run `forge nexus-policy-status` and review the current official Nexus Mods policy pages. Do not scrape Nexus Mods or infer permission settings from cached snippets.
+2. Run `forge nexus-scaffold` when no publication plan exists.
+3. Inventory every bundled file and replace catch-all ownership entries with accurate rights records.
+4. Obtain evidence for third-party permissions. Credit is never permission. Never invent, paraphrase, or fabricate an author's consent.
+5. Record dependencies that are required but not redistributed.
+6. Verify game terms, project/asset licences, collaborator credits, Donation Points compatibility, executable/network behaviour, adult-content classification, claim evidence, and AI assistance.
+7. The uploader must review and accept the attestation. An AI must never sign it or set `responsibility_accepted=true` without the user's explicit confirmation.
+8. Run `forge nexus-audit` and require `share_ready: true`. A normal ZIP, successful build, lint pass or xEdit pass is never sufficient for public sharing.
+9. Run `forge nexus-build` for the final tree, public rights documents, private audit and ZIP.
+10. Still require one real Vortex and MO2 installation test before publication.
+
+A normal `release-build` is not sufficient when public sharing is intended. Use `release-build --target nexus --publication-plan ...` or `nexus-build`.
+
+Never call a mod Nexus-compliant merely because its files compile or lint. The rights gate, content classification, truthful mod-page claims, uploader attestation and current policy review are separate mandatory evidence.
+
+## Verified external-tool selection
+
+- Before inventing an archive, mesh, Papyrus, Synthesis, LOD, animation, or asset-processing implementation, call `forge tool-resolve <capability>`.
+- Use only the selected configured executable with a matching SHA-256 pin and exact catalog capability.
+- Scan nested tool folders and ZIPs with `forge tool-scan`; tools such as `ESLifier/bsarch/BSArch.exe` are valid discoveries.
+- Use `forge tool-import` for permitted local tool-vault copies or `forge tool-configure` for configure-only legal installations. Explicit approval is mandatory.
+- Never bundle the local tool vault or third-party executables into Forge, GitHub, FOMOD, or Nexus outputs. Local possession is not redistribution permission.
+- Never substitute a GUI for a CLI. `Synthesis.exe` is not `Synthesis.Bethesda.CLI.exe`.
+- Use BSArch for `.bsa`/`.ba2` work when the `archive.bsa.*` capability resolves. Use the official Bethesda Papyrus compiler for publication builds when `papyrus.compile.official` resolves. Use Champollion only for recovery/analysis, never as proof of original source ownership.
+- When no eligible real tool resolves, stop and report the missing adapter instead of generating an unverified replacement.

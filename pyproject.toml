@@ -5,8 +5,8 @@ backend-path = ["."]
 
 [project]
 name = "skyrim-forge"
-version = "3.0.2"
-description = "Safety-first Skyrim mod engineering and external-tool automation fabric"
+version = "4.2.0"
+description = "Safety-first Skyrim mod engineering, automation fabric, and Nexus publication gate"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

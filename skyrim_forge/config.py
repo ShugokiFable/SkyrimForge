@@ -37,6 +37,7 @@ class ForgeConfig:
     vortex_staging: Path | None = None
     vortex_downloads: Path | None = None
     tools_root: Path | None = None
+    tool_vault_root: Path = field(default_factory=lambda: DEFAULT_HOME / "tool-vault")
     seven_zip: Path | None = None
     allow_external_processes: bool = False
     require_approval_for_writes: bool = True
@@ -62,6 +63,7 @@ class ForgeConfig:
             self.vortex_staging,
             self.vortex_downloads,
             self.tools_root,
+            self.tool_vault_root,
             self.papyrus_flags.parent if self.papyrus_flags else None,
             *self.papyrus_imports,
             *self.extra_read_roots,
@@ -100,7 +102,11 @@ def _integer(value: Any, default: int, minimum: int, maximum: int) -> int:
 def default_tools() -> dict[str, ToolConfig]:
     return {name: ToolConfig() for name in (
         "xedit", "mo2", "loot", "wrye_bash", "creation_kit", "ckpe_loader",
-        "papyrus_compiler", "archive", "ui_worker", "loot_worker", "wrye_worker", "ck_worker",
+        "papyrus_compiler", "archive", "bsarch", "champollion", "synthesis_cli", "synthesis_gui", "deadmesh_cli", "deadmesh_gui",
+        "eslifier", "nif_optimizer", "nif_analyzer", "resaver", "sniff", "cathedral_assets_optimizer",
+        "nifskope", "texconv", "bodyslide", "pandora", "nemesis", "xlodgen", "dyndolod",
+        "cmake", "vcpkg", "ninja", "ui_worker", "loot_worker", "wrye_worker", "ck_worker",
+        "asset_worker", "animation_worker", "bodyslide_worker", "lod_worker", "grass_worker", "synthesis_worker", "audio_worker",
     )}
 
 
@@ -179,6 +185,7 @@ def load_config(path: str | Path | None = None, *, create: bool = True) -> Forge
         vortex_staging=_path(paths.get("vortex_staging"), base),
         vortex_downloads=_path(paths.get("vortex_downloads"), base),
         tools_root=_path(paths.get("tools_root"), base),
+        tool_vault_root=_path(paths.get("tool_vault_root"), base) or (DEFAULT_HOME / "tool-vault"),
         seven_zip=_path(paths.get("seven_zip"), base),
         allow_external_processes=_bool(safety.get("allow_external_processes"), False),
         require_approval_for_writes=_bool(safety.get("require_approval_for_writes"), True),
@@ -194,6 +201,7 @@ def load_config(path: str | Path | None = None, *, create: bool = True) -> Forge
     if create:
         config.workspace_root.mkdir(parents=True, exist_ok=True)
         config.audit_log.parent.mkdir(parents=True, exist_ok=True)
+        config.tool_vault_root.mkdir(parents=True, exist_ok=True)
         if legacy_papyrus and "compiler" in papyrus and requested.is_file():
             backup = requested.with_suffix(requested.suffix + ".pre-3.0.1.bak")
             if not backup.exists():
@@ -209,7 +217,7 @@ def _quote(value: str) -> str:
 
 def save_config(config: ForgeConfig) -> None:
     rows = ["[paths]", f"workspace_root = {_quote(str(config.workspace_root))}", f"audit_log = {_quote(str(config.audit_log))}"]
-    for name in ("skyrim_data", "plugins_file", "loadorder_file", "mo2_profiles_root", "vortex_staging", "vortex_downloads", "tools_root", "seven_zip"):
+    for name in ("skyrim_data", "plugins_file", "loadorder_file", "mo2_profiles_root", "vortex_staging", "vortex_downloads", "tools_root", "tool_vault_root", "seven_zip"):
         rows.append(f"{name} = {_quote(str(getattr(config, name) or ''))}")
     rows.append(f"mo2_instance = {_quote(config.mo2_instance)}")
     roots = ", ".join(_quote(str(path)) for path in config.extra_read_roots)
@@ -253,10 +261,12 @@ def configure_value(config: ForgeConfig, dotted: str, value: str) -> ForgeConfig
             tool.timeout_seconds = _integer(int(value), 900, 1, 86_400)
         else:
             setattr(tool, field_name, value.strip())
-    elif dotted in {"workspace_root", "skyrim_data", "plugins_file", "loadorder_file", "mo2_profiles_root", "vortex_staging", "vortex_downloads", "tools_root", "seven_zip"}:
+    elif dotted in {"workspace_root", "skyrim_data", "plugins_file", "loadorder_file", "mo2_profiles_root", "vortex_staging", "vortex_downloads", "tools_root", "tool_vault_root", "seven_zip"}:
         setattr(config, dotted, Path(value).expanduser().resolve(strict=False) if value else None)
         if dotted == "workspace_root" and config.workspace_root:
             config.workspace_root.mkdir(parents=True, exist_ok=True)
+        if dotted == "tool_vault_root" and config.tool_vault_root:
+            config.tool_vault_root.mkdir(parents=True, exist_ok=True)
     elif dotted == "mo2_instance":
         config.mo2_instance = value.strip()
     elif dotted == "papyrus.flags":

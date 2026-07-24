@@ -12,7 +12,17 @@ $Tools = @(
     @{Name='creation_kit';Label='CreationKit.exe'},
     @{Name='ckpe_loader';Label='ckpe_loader.exe'},
     @{Name='papyrus_compiler';Label='PapyrusCompiler.exe'},
-    @{Name='archive';Label='Archive.exe / BSArch.exe / 7z.exe'}
+    @{Name='archive';Label='Archive.exe / BSArch.exe / 7z.exe'},
+    @{Name='cmake';Label='cmake.exe'},
+    @{Name='vcpkg';Label='vcpkg.exe'},
+    @{Name='ninja';Label='ninja.exe (optional)'},
+    @{Name='asset_worker';Label='Forge-compatible asset worker executable (optional)'},
+    @{Name='animation_worker';Label='Forge-compatible animation worker executable (optional)'},
+    @{Name='bodyslide_worker';Label='Forge-compatible BodySlide worker executable (optional)'},
+    @{Name='lod_worker';Label='Forge-compatible LOD worker executable (optional)'},
+    @{Name='grass_worker';Label='Forge-compatible grass-cache worker executable (optional)'},
+    @{Name='synthesis_worker';Label='Forge-compatible Synthesis worker executable (optional)'},
+    @{Name='audio_worker';Label='Forge-compatible audio/voice worker executable (optional)'}
 )
 Write-Host 'Configure only tools installed on this machine. Blank entries are preserved.' -ForegroundColor Cyan
 foreach ($Tool in $Tools) {
@@ -20,11 +30,9 @@ foreach ($Tool in $Tools) {
     if ($Path) {
         & $Python -m skyrim_forge config-set "tools.$($Tool.Name).executable" $Path
         if ($LASTEXITCODE) { throw "$($Tool.Name) configuration failed." }
-        $Pin = Read-Host "Pin SHA-256 for $($Tool.Name)? [y/N]"
-        if ($Pin -match '^(?i:y|yes)$') {
-            $Hash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
-            & $Python -m skyrim_forge config-set "tools.$($Tool.Name).sha256" $Hash
-        }
+        $Hash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+        & $Python -m skyrim_forge config-set "tools.$($Tool.Name).sha256" $Hash
+        if ($LASTEXITCODE) { throw "$($Tool.Name) SHA-256 pin failed." }
     }
 }
 $UI = Read-Host 'Configure coordinate-free Windows UI Automation fallback? [y/N]'

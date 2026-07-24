@@ -6,6 +6,7 @@ from typing import Any
 
 from .config import ForgeConfig
 from .tools import discover_executable, tool_status
+from .toolchain import toolchain_status
 from .version import VERSION
 
 
@@ -31,12 +32,13 @@ def doctor(config: ForgeConfig) -> dict[str, Any]:
         "external_processes_enabled": config.allow_external_processes,
         "ui_automation_enabled": config.allow_ui_automation,
         "tools": tools,
+        "toolchain": toolchain_status(config),
         "warnings": config.load_warnings,
     }
 
 
 def discover_tools(config: ForgeConfig) -> dict[str, str]:
-    roots = [path for path in (config.tools_root, Path("C:/Modding"), Path("C:/Games"), Path("C:/Program Files"), Path("C:/Program Files (x86)")) if path and path.exists()]
+    roots = [path for path in (config.tool_vault_root, config.tools_root, Path("C:/Modding"), Path("C:/Games"), Path("C:/Program Files"), Path("C:/Program Files (x86)")) if path and path.exists()]
     names = {
         "xedit": ["SSEEdit64.exe", "SSEEdit.exe"],
         "mo2": ["ModOrganizer.exe"],
@@ -45,7 +47,16 @@ def discover_tools(config: ForgeConfig) -> dict[str, str]:
         "creation_kit": ["CreationKit.exe"],
         "ckpe_loader": ["ckpe_loader.exe"],
         "papyrus_compiler": ["PapyrusCompiler.exe"],
-        "archive": ["Archive.exe", "BSArch.exe", "7z.exe"],
+        "archive": ["Archive.exe", "7z.exe", "7zz.exe"],
+        "bsarch": ["BSArch.exe"],
+        "champollion": ["Champollion.exe"],
+        "synthesis_cli": ["Synthesis.Bethesda.CLI.exe"],
+        "synthesis_gui": ["Synthesis.exe"],
+        "deadmesh_cli": ["dmscan.exe"],
+        "deadmesh_gui": ["DeadMesh.exe"],
+        "cmake": ["cmake.exe", "cmake"],
+        "vcpkg": ["vcpkg.exe", "vcpkg"],
+        "ninja": ["ninja.exe", "ninja"],
     }
     found = {}
     for name, executable_names in names.items():
