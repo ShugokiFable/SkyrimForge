@@ -67,7 +67,12 @@ class V41EngineeringTests(unittest.TestCase):
     def test_papyrus_case_identity_and_hot_event_are_reviewed(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td)
-            a=root/"Example.psc"; b=root/"example.PSC"
+            # Windows filesystems are normally case-insensitive. Put the two
+            # case-colliding identities in separate source roots so both files
+            # exist and the analyzer, rather than the filesystem, detects them.
+            first=root/"first"; second=root/"second"
+            first.mkdir(); second.mkdir()
+            a=first/"Example.psc"; b=second/"example.PSC"
             a.write_text("ScriptName Example extends Quest\nEvent OnUpdate()\nWhile True\nGame.GetPlayer()\nEndWhile\nEndEvent\n")
             b.write_text("ScriptName example extends Quest\n")
             report=analyze_sources([a,b])

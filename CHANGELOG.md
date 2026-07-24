@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.2.3
+
+- Fixed the installed regression suite scanning `.venv\Scripts\Activate.ps1` as if it were Forge-owned release source.
+- Fixed the Papyrus case-collision fixture on Windows by placing case-equivalent filenames in separate source roots.
+- Added regressions proving runtime-created virtual environments are excluded while Forge-owned PowerShell scripts remain audited.
+- Preserved the real PowerShell parser gate over top-level and worker scripts.
+- Synchronized packaged native helpers with the published binaries and added a hash-equality release gate.
+
+## 4.2.2
+
+- Fixed `START-HERE.bat` and `Run Tests.bat` passing a quoted `%~dp0` directory token to PowerShell. Because `%~dp0` ends with a backslash, Windows command-line parsing could preserve the closing quote as part of the path.
+- The startup and test launchers now let `PowerShell-Parse-Gate.ps1` use its own `$PSScriptRoot` instead of serializing the repository directory through `cmd.exe`.
+- Hardened the parser gate to normalize an accidentally quoted legacy root argument instead of crashing with `Illegal characters in path`.
+- Added a noninteractive `START-HERE.bat --validate-only` mode and execute that exact path in Windows CI.
+- Added release-time checks that reject standalone quoted `%~dp0` arguments in external-command lines.
+- Added permanent regressions for the exact user-reported failure.
+
+## 4.2.1
+
+- Fixed the PowerShell parser failure in `Install-Forge-Skill.ps1` caused by an ambiguous variable immediately followed by a colon.
+- Replaced the unsafe interpolation with PowerShell's format operator.
+- Made AI skill installation transactional, idempotent, rollback-safe, and reparse-point aware.
+- Added an all-script PowerShell parser gate that runs before the menu and before regression tests.
+- Added static detection for ambiguous colon-adjacent variable references in expandable PowerShell strings.
+- Added Windows CI execution for all five AI provider skill targets, including a second idempotence pass and content-hash verification.
+- Added release regressions covering the exact reported parser failure.
+
 ## 4.2.0
 
 - Added the Verified Toolchain Broker with recursive ZIP/directory discovery, including nested tools such as BSArch inside ESLifier.

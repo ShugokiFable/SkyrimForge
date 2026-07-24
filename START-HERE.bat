@@ -1,11 +1,20 @@
 @echo off
 setlocal EnableExtensions
-title Skyrim Forge 4.2
+title Skyrim Forge 4.2.3
+set "FORGE_PS_GATE=%~dp0PowerShell-Parse-Gate.ps1"
+powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%FORGE_PS_GATE%"
+if errorlevel 1 (
+  echo.
+  echo PowerShell validation failed. Forge will not continue.
+  pause
+  exit /b 1
+)
+if /I "%~1"=="--validate-only" exit /b 0
 :menu
 cls
 echo.
 echo ================================================================
-echo  SKYRIM FORGE 4.2 - VERIFIED TOOLCHAIN FABRIC
+echo  SKYRIM FORGE 4.2.3 - VERIFIED TOOLCHAIN FABRIC
 echo ================================================================
 echo.
 echo  1. Install or update Forge
@@ -36,8 +45,6 @@ if errorlevel 2 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~d
 if errorlevel 1 goto install
 :install
 set "SCRIPT=%~dp0Install-or-Update.ps1"
-powershell -NoLogo -NoProfile -Command "$t=$null;$e=$null;[System.Management.Automation.Language.Parser]::ParseFile($env:SCRIPT,[ref]$t,[ref]$e)|Out-Null;if($e.Count){$e | ForEach-Object { Write-Host $_.Message -ForegroundColor Red };exit 1}else{Write-Host 'PowerShell parser check: PASS' -ForegroundColor Green}"
-if errorlevel 1 (pause&goto menu)
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%"
 pause
 goto menu

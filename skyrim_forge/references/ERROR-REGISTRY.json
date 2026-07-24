@@ -2256,9 +2256,6 @@
     "title": "Unresolved runtime target is not classified by dependency scope"
   },
   {
-    "id": "SPID-003",
-    "title": "Static linter misclassified SPID skill range as actor-level range",
-    "scope": "shared-cross-provider",
     "applies_to": [
       "Claude",
       "Codex",
@@ -2267,8 +2264,7 @@
       "Hermes"
     ],
     "evidence_status": "user-confirmed-runtime",
-    "symptom": "Forge reports Malformed SPID level range for a working filter such as 25/255,0(55/255).",
-    "root_cause": "The linter parsed every slash expression as an actor-level range and did not model skillType(min/max) tokens.",
+    "id": "SPID-003",
     "prevention": [
       "Parse actor-level and skill expressions as separate grammar tokens.",
       "Accept skill indexes 0 through 17 with min/max ranges.",
@@ -2280,17 +2276,66 @@
       "Negative fixture for 10/24,0(25)",
       "Compare against SPID runtime parse/distribution logs"
     ],
+    "root_cause": "The linter parsed every slash expression as an actor-level range and did not model skillType(min/max) tokens.",
+    "scope": "shared-cross-provider",
     "sources": [
       {
-        "provider": "claude",
-        "note": "SPID 7.3.1.16 distributed the For Honor perk using 25/255,0(55/255), while 0(25) produced invalid stoul argument."
+        "note": "SPID 7.3.1.16 distributed the For Honor perk using 25/255,0(55/255), while 0(25) produced invalid stoul argument.",
+        "provider": "claude"
       }
     ],
+    "symptom": "Forge reports Malformed SPID level range for a working filter such as 25/255,0(55/255).",
     "tags": [
       "spid",
       "linter",
       "false-positive",
       "runtime-evidence"
-    ]
+    ],
+    "title": "Static linter misclassified SPID skill range as actor-level range"
+  },
+  {
+    "component": "PowerShell release scripts",
+    "fixed_in": "4.2.1",
+    "id": "FORGE-PS-INTERPOLATION-COLON-001",
+    "regression": "tests/test_powershell_release.py plus PowerShell-Parse-Gate.ps1 and the Windows all-provider skill-install job.",
+    "root_cause": "PowerShell treats the colon as part of a scoped variable reference. Use ${Name}, $($Name), or the format operator.",
+    "severity": "release-blocking",
+    "symptom": "ParserError: Variable reference is not valid when a simple variable is immediately followed by a colon inside an expandable string."
+  },
+  {
+    "component": "Windows batch launchers",
+    "fixed_in": "4.2.2",
+    "id": "FORGE-BAT-DP0-QUOTE-001",
+    "prevention": [
+      "Do not pass standalone -Root \"%~dp0\" to PowerShell when the script can use $PSScriptRoot.",
+      "Reject standalone quoted %~dp0 arguments during repository validation.",
+      "Exercise START-HERE.bat --validate-only under Windows CI."
+    ],
+    "regression": "tests/test_powershell_release.py and the Windows exact START-HERE startup-gate job.",
+    "root_cause": "A quoted %~dp0 token was passed as a standalone argument to an external executable. The expanded value ends with a backslash, which can escape the closing quote in Windows command-line serialization.",
+    "severity": "release-blocking",
+    "symptom": "Resolve-Path reports Illegal characters in path and shows a Forge root ending in a literal double quote."
+  },
+  {
+    "cause": "The test recursively scanned every .ps1 below the repository instead of the same Forge-owned source set used by the parser gate.",
+    "fix": "Audit only top-level Forge scripts and workers/*.ps1; exclude runtime-generated environments.",
+    "fixed_in": "4.2.3",
+    "id": "FORGE-TEST-SOURCE-BOUNDARY-001",
+    "symptoms": [
+      "Valid .venv Activate.ps1 reported as ambiguous PowerShell interpolation",
+      "Run Tests.bat fails after installation but clean repository tests pass"
+    ],
+    "title": "Regression test scans runtime virtualenv PowerShell scripts"
+  },
+  {
+    "cause": "Example.psc and example.PSC were created in one case-insensitive directory, so the second write replaced the first.",
+    "fix": "Place case-equivalent filenames in separate source roots while retaining the same case-insensitive ScriptName identities.",
+    "fixed_in": "4.2.3",
+    "id": "FORGE-WINDOWS-CASE-FIXTURE-001",
+    "symptoms": [
+      "PAPYRUS-LOOP-IN-UPDATE warning disappears only on Windows",
+      "Duplicate ScriptName test sees only the second file content"
+    ],
+    "title": "Case-collision Papyrus fixture overwrites itself on Windows"
   }
 ]

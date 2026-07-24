@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "4.2.0"
+VERSION = "4.2.3"
 EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
@@ -186,6 +186,12 @@ def validate_native(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         errors.append("Linux native helper is not an ELF executable")
     if not report["windows_pe"]:
         errors.append("Windows native helper is not a PE executable")
+    package_linux = ROOT / "skyrim_forge" / "bin" / "linux-x64" / "SkyrimForge.Native"
+    package_windows = ROOT / "skyrim_forge" / "bin" / "win-x64" / "SkyrimForge.Native.exe"
+    report["package_copy_hashes"] = {"linux": sha256(package_linux), "windows": sha256(package_windows)}
+    report["package_copies_match"] = report["package_copy_hashes"] == report["hashes"]
+    if not report["package_copies_match"]:
+        errors.append("packaged native helper copies differ from writer/published binaries")
     native = windows if os.name == "nt" else linux
     platform_name = "windows" if os.name == "nt" else "linux"
     version = run([str(native), "version"])
@@ -195,7 +201,7 @@ def validate_native(errors: list[str], warnings: list[str]) -> dict[str, Any]:
     if self_test["returncode"] or "PASS" not in self_test["stdout"]:
         errors.append(f"{platform_name} native self-test failed")
     report.update({"executed_platform": platform_name, "version": version, "self_test": self_test})
-    report["result"] = "PASS" if report["linux_elf"] and report["windows_pe"] and version["returncode"] == self_test["returncode"] == 0 else "FAIL"
+    report["result"] = "PASS" if report["linux_elf"] and report["windows_pe"] and report["package_copies_match"] and version["returncode"] == self_test["returncode"] == 0 else "FAIL"
     return report
 
 
@@ -265,20 +271,43 @@ def validate_mcp(errors: list[str]) -> dict[str, Any]:
     return {"result": "PASS" if passed else "FAIL", "tools": tool_count, "resources": sorted(resource_uris), "prompts": sorted(prompt_names), "stderr": completed.stderr}
 
 
+def _powershell_expandable_strings(text: str) -> list[tuple[int, str]]:
+    strings: list[tuple[int, str]] = []
+    for line_number, line in enumerate(text.splitlines(), 1):
+        for match in re.finditer(r'"(?:`.|[^"\r\n])*"', line):
+            strings.append((line_number, match.group(0)))
+    for match in re.finditer(r'@"\r?\n(.*?)\r?\n"@', text, flags=re.S):
+        line_number = text.count("\n", 0, match.start()) + 1
+        strings.append((line_number, match.group(1)))
+    return strings
+
+
 def validate_powershell(errors: list[str], warnings: list[str]) -> dict[str, Any]:
     files=sorted(ROOT.glob("*.ps1"))+sorted((ROOT/"workers").glob("*.ps1"))
+    batch_files=sorted(ROOT.glob("*.bat"))+sorted(ROOT.glob("*.cmd"))
     findings=[]
+    bad_colon_reference = re.compile(r'(?<!`)\$(?!\{|\(|(?:env|global|script|local|private|using):)[A-Za-z_][A-Za-z0-9_]*:')
     for path in files:
-        text=path.read_text(encoding="utf-8-sig")
-        if re.search(r"Invoke-Expression|\biex\b",text,re.I): findings.append(f"dynamic expression execution: {path.name}")
-        if re.search(r"SkyrimForge\.Native\s+2\.",text): findings.append(f"stale native version: {path.name}")
+        script_text=path.read_text(encoding="utf-8-sig")
+        if re.search(r"Invoke-Expression|\biex\b",script_text,re.I): findings.append(f"dynamic expression execution: {path.name}")
+        if re.search(r"SkyrimForge\.Native\s+2\.",script_text): findings.append(f"stale native version: {path.name}")
+        for line_number, expandable in _powershell_expandable_strings(script_text):
+            bad = bad_colon_reference.search(expandable)
+            if bad:
+                findings.append(f"ambiguous variable followed by colon at {path.name}:{line_number}: {bad.group(0)}")
         # Simple delimiter scan after removing strings/comments is not a parser, but catches accidental truncation.
-        scrub=re.sub(r"(?m)#.*$|'(?:''|[^'])*'|\"(?:`.|[^\"])*\"","",text)
+        scrub=re.sub(r"(?m)#.*$|'(?:''|[^'])*'|\"(?:`.|[^\"])*\"","",script_text)
         for left,right in (("{","}"),("(",")")):
             if scrub.count(left)!=scrub.count(right): findings.append(f"unbalanced {left}{right}: {path.name}")
+    quoted_dp0 = re.compile(r'"%~dp0"(?=\s|$)', re.I)
+    for path in batch_files:
+        for line_number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+            stripped=line.strip()
+            if quoted_dp0.search(line) and not re.match(r'(?i)^(?:cd|pushd)\b', stripped):
+                findings.append(f"unsafe standalone quoted %~dp0 argument at {path.name}:{line_number}")
     if findings: errors.extend(findings)
-    warnings.append("PowerShell syntax is statically screened here; Windows CI performs the real PowerShell parser and installer smoke test")
-    return {"result":"PASS" if not findings else "FAIL","files":[p.name for p in files],"findings":findings}
+    warnings.append("PowerShell syntax is statically screened here; Windows CI executes the shipped parser gate, the exact START-HERE batch startup path, and every skill-provider installation")
+    return {"result":"PASS" if not findings else "FAIL","files":[p.name for p in files],"batch_files":[p.name for p in batch_files],"findings":findings}
 
 
 def portable(value: Any) -> Any:

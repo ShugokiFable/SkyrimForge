@@ -109,20 +109,12 @@ jobs:
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
           [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_PYTHON=${{ steps.python.outputs.python-path }}`n", $utf8NoBom)
           & "${{ steps.python.outputs.python-path }}" --version
-      - name: Parse PowerShell scripts
+      - name: Parse every PowerShell script
         shell: powershell
-        run: |
-          $failed = $false
-          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
-            $tokens = $null
-            $parseErrors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
-            if ($parseErrors.Count) {
-              $failed = $true
-              $parseErrors | ForEach-Object { Write-Error ("{0}:{1}: {2}" -f $_.Extent.File, $_.Extent.StartLineNumber, $_.Message) }
-            }
-          }
-          if ($failed) { exit 1 }
+        run: ./PowerShell-Parse-Gate.ps1
+      - name: Exercise exact START-HERE startup gate
+        shell: cmd
+        run: call START-HERE.bat --validate-only
       - name: Create legacy Papyrus configuration
         shell: powershell
         run: |
@@ -155,11 +147,29 @@ jobs:
           if ($migrated -notmatch '\[tools\.papyrus_compiler\]') { throw 'Papyrus compiler was not migrated.' }
           if ($migrated -match '(?m)^compiler\s*=') { throw 'Legacy papyrus.compiler survived canonical migration.' }
           ./Install-or-Update.ps1
+      - name: Install every AI skill target twice
+        shell: powershell
+        run: |
+          $skillRoot = Join-Path $env:RUNNER_TEMP 'Forge Skill Homes'
+          $env:CODEX_HOME = Join-Path $skillRoot 'Codex'
+          $env:CLAUDE_CONFIG_DIR = Join-Path $skillRoot 'Claude'
+          $env:GROK_HOME = Join-Path $skillRoot 'Grok'
+          $env:KIMI_CODE_HOME = Join-Path $skillRoot 'Kimi'
+          $env:HERMES_HOME = Join-Path $skillRoot 'Hermes'
+          ./Install-Forge-Skill.ps1 -Provider All
+          ./Install-Forge-Skill.ps1 -Provider All
+          $sourceHash = (Get-FileHash -LiteralPath './integrations/skyrim-forge/SKILL.md' -Algorithm SHA256).Hash
+          foreach ($home in @($env:CODEX_HOME, $env:CLAUDE_CONFIG_DIR, $env:GROK_HOME, $env:KIMI_CODE_HOME, $env:HERMES_HOME)) {
+            $installed = Join-Path $home 'skills/skyrim-forge/SKILL.md'
+            if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) { throw "Installed skill missing: $installed" }
+            $installedHash = (Get-FileHash -LiteralPath $installed -Algorithm SHA256).Hash
+            if ($installedHash -ne $sourceHash) { throw "Installed skill hash mismatch: $installed" }
+          }
       - name: Verify installed runtime
         shell: powershell
         run: |
           $version = (& ./writer/published/win-x64/SkyrimForge.Native.exe version | Out-String).Trim()
-          if ($version -ne 'SkyrimForge.Native 4.2.0 go') { throw "Unexpected native version: $version" }
+          if ($version -ne 'SkyrimForge.Native 4.2.3 go') { throw "Unexpected native version: $version" }
           ./writer/published/win-x64/SkyrimForge.Native.exe self-test
           $doctor = ./.venv/Scripts/python.exe -m skyrim_forge doctor | ConvertFrom-Json
           if ($doctor.result -ne 'PASS') { throw ('Doctor failed: ' + ($doctor | ConvertTo-Json -Depth 20)) }

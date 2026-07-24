@@ -2,16 +2,16 @@
   "go": {
     "builds": {
       "linux": {
-        "bundled": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
-        "first": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
+        "bundled": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
+        "first": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
         "result": "PASS",
-        "second": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d"
+        "second": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e"
       },
       "windows": {
-        "bundled": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718",
-        "first": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718",
+        "bundled": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf",
+        "first": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf",
         "result": "PASS",
-        "second": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718"
+        "second": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
       }
     },
     "format": {
@@ -101,10 +101,15 @@
   "native": {
     "executed_platform": "linux",
     "hashes": {
-      "linux": "25a3f7c6af89885f11c49114820a8caf0af9910816fbdf78fe8c860bdc98180d",
-      "windows": "04eb54ee999bfc16edf6f67af6e139d80e7e2eb0ce0eba4a2368d87760e25718"
+      "linux": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
+      "windows": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
     },
     "linux_elf": true,
+    "package_copies_match": true,
+    "package_copy_hashes": {
+      "linux": "17b51ebc67788bf5017bd78a209efaafbbc5d2390966e822d471200932a6be7e",
+      "windows": "049e1a7b9d2ab401d990e0084c92a92d87c388907ce744f2a4ccd79d7ca46abf"
+    },
     "result": "PASS",
     "self_test": {
       "command": [
@@ -122,11 +127,11 @@
       ],
       "returncode": 0,
       "stderr": "",
-      "stdout": "SkyrimForge.Native 4.2.0 go\n"
+      "stdout": "SkyrimForge.Native 4.2.3 go\n"
     },
     "windows_pe": true
   },
   "product": "Skyrim Forge",
   "result": "PASS",
-  "version": "4.2.0"
+  "version": "4.2.3"
 }
