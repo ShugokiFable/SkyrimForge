@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.2.5
+
+- Fixed fresh Windows installations failing when Python 3.11+ was not already on `PATH`.
+- Added an explicit, user-approved bootstrap for the pinned Python 3.13.14 installer from python.org with SHA-256 and Authenticode verification.
+- Added registry and standard-location Python discovery so a newly installed interpreter is usable without restarting the shell.
+- Added `SKYRIM_FORGE_ROOT` registration and a generated `INSTALLATION.json` beside every installed Forge AI skill, removing per-provider `PYTHONPATH` workarounds.
+- Made explicit `SKYRIM_FORGE_CONFIG` and `--config` locations self-contained so sandboxed AI clients do not fall back to an unwritable user Documents folder.
+- Added one-command all-AI setup covering runtime installation, provider skills, MCP registration, and a machine-readable integration report.
+- Added current Codex, Claude, and Grok MCP registration; Kimi and Hermes are reported accurately as skill/CLI consumers when no supported MCP registrar is available.
+- Fixed Grok registration under Windows PowerShell 5 and verify its exact enabled command rather than trusting process exit alone.
+- Fixed configured 7-Zip paths being omitted from Forge's read allowlist.
+- Fixed the Windows CI native-version assertion that was stale at 4.2.3.
+- Added `SKYRIM_FORGE_GO` so sandboxed and deterministic builds can select the exact Go 1.23.2 executable without relying on inherited `PATH`.
+- Made updates repin the Forge-owned UI worker to the active installation while preserving all user-selected Skyrim and third-party tool paths.
+- Fixed strict-mode provider prompts parsing `$Name?` as a variable and permanently excluded machine-local installation descriptors, reports, virtual environments, and Go caches from release artifacts.
+
 ## 4.2.4
 
 - Fixed GitHub release validation failing because Go embedded Git revision and commit-time metadata only when building inside the Actions checkout.

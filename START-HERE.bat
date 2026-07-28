@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions
-title Skyrim Forge 4.2.4
+title Skyrim Forge 4.2.5
 set "FORGE_PS_GATE=%~dp0PowerShell-Parse-Gate.ps1"
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%FORGE_PS_GATE%"
 if errorlevel 1 (
@@ -14,10 +14,10 @@ if /I "%~1"=="--validate-only" exit /b 0
 cls
 echo.
 echo ================================================================
-echo  SKYRIM FORGE 4.2.4 - VERIFIED TOOLCHAIN FABRIC
+echo  SKYRIM FORGE 4.2.5 - VERIFIED TOOLCHAIN FABRIC
 echo ================================================================
 echo.
-echo  1. Install or update Forge
+echo  1. Install/update Forge and connect all detected AI apps
 echo  2. Configure core paths
 echo  3. Configure xEdit, MO2, CK, LOOT, Wrye and Papyrus
 echo  4. Run full doctor
@@ -44,7 +44,7 @@ if errorlevel 3 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~d
 if errorlevel 2 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Configure-Forge.ps1"&pause&goto menu
 if errorlevel 1 goto install
 :install
-set "SCRIPT=%~dp0Install-or-Update.ps1"
-powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%"
+set "SCRIPT=%~dp0Install-AI-Bridge.ps1"
+powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -BootstrapPython -Yes
 pause
 goto menu

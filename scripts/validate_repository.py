@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "4.2.4"
-EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov"}
+VERSION = "4.2.5"
+EXCLUDED = {".git", ".venv", "venv", ".go-cache", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov", "REPORTS", "INSTALLATION.json"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
 
@@ -150,11 +150,13 @@ def validate_python(errors: list[str]) -> dict[str, Any]:
 
 
 def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
-    if not shutil.which("go"):
+    go = os.environ.get("SKYRIM_FORGE_GO") or shutil.which("go")
+    if not go or not Path(go).is_file():
         warnings.append("Go unavailable; native source and reproducibility checks skipped")
         return {"result":"NOT-RUN"}
+    gofmt = str(Path(go).with_name("gofmt.exe" if os.name == "nt" else "gofmt"))
     cwd = ROOT/"writer"/"native-go"
-    fmt = run(["gofmt","-l","."],cwd=cwd); vet=run(["go","vet","./..."],cwd=cwd); tests=run(["go","test","./..."],cwd=cwd); race=run(["go","test","-race","./..."],cwd=cwd)
+    fmt = run([gofmt,"-l","."],cwd=cwd); vet=run([go,"vet","./..."],cwd=cwd); tests=run([go,"test","./..."],cwd=cwd); race=run([go,"test","-race","./..."],cwd=cwd)
     if fmt["returncode"] or fmt["stdout"].strip(): errors.append("gofmt failed")
     if vet["returncode"]: errors.append("go vet failed")
     if tests["returncode"]: errors.append("go tests failed")
@@ -165,7 +167,7 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         for target, env in {"linux":{"CGO_ENABLED":"0","GOOS":"linux","GOARCH":"amd64"},"windows":{"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}}.items():
             suffix=".exe" if target=="windows" else ""; a=td/f"{target}-a{suffix}"; b=td/f"{target}-b{suffix}"
             for output in (a,b):
-                result=run(["go","build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
+                result=run([go,"build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
                 if result["returncode"]: errors.append(f"{target} native build failed")
             if a.exists() and b.exists():
                 bundled=ROOT/"writer"/"published"/("win-x64" if target=="windows" else "linux-x64")/("SkyrimForge.Native.exe" if target=="windows" else "SkyrimForge.Native")
@@ -175,8 +177,8 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
                     "second":second_hash,
                     "bundled":bundled_hash,
                     "buildvcs":False,
-                    "first_metadata":run(["go","version","-m",str(a)],cwd=cwd),
-                    "bundled_metadata":run(["go","version","-m",str(bundled)],cwd=cwd),
+                    "first_metadata":run([go,"version","-m",str(a)],cwd=cwd),
+                    "bundled_metadata":run([go,"version","-m",str(bundled)],cwd=cwd),
                     "result":"PASS" if first_hash==second_hash==bundled_hash else "FAIL",
                 }
                 if builds[target]["result"]!="PASS": errors.append(f"{target} native binary is not reproducible under the -buildvcs=false release profile")

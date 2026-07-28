@@ -64,6 +64,7 @@ class ForgeConfig:
             self.vortex_downloads,
             self.tools_root,
             self.tool_vault_root,
+            self.seven_zip.parent if self.seven_zip else None,
             self.papyrus_flags.parent if self.papyrus_flags else None,
             *self.papyrus_imports,
             *self.extra_read_roots,
@@ -111,7 +112,9 @@ def default_tools() -> dict[str, ToolConfig]:
 
 
 def load_config(path: str | Path | None = None, *, create: bool = True) -> ForgeConfig:
-    requested = Path(path or os.environ.get("SKYRIM_FORGE_CONFIG", DEFAULT_CONFIG)).expanduser()
+    environment_path = os.environ.get("SKYRIM_FORGE_CONFIG")
+    isolated = path is not None or bool(environment_path)
+    requested = Path(path or environment_path or DEFAULT_CONFIG).expanduser()
     base = requested.parent
     data: dict[str, Any] = {}
     warnings: list[str] = []
@@ -138,8 +141,11 @@ def load_config(path: str | Path | None = None, *, create: bool = True) -> Forge
     if not all(isinstance(section, dict) for section in (paths, safety, limits, tools_data, papyrus)):
         raise ConfigurationError("Configuration sections must be TOML tables")
 
-    workspace = _path(paths.get("workspace_root"), base) or (Path.home() / "Documents" / "Skyrim Forge" / "Workspaces")
-    audit = _path(paths.get("audit_log"), base) or (Path.home() / ".skyrim-forge" / "audit.jsonl")
+    workspace_default = base / "Workspaces" if isolated else Path.home() / "Documents" / "Skyrim Forge" / "Workspaces"
+    audit_default = base / "audit.jsonl" if isolated else Path.home() / ".skyrim-forge" / "audit.jsonl"
+    vault_default = base / "tool-vault" if isolated else DEFAULT_HOME / "tool-vault"
+    workspace = _path(paths.get("workspace_root"), base) or workspace_default
+    audit = _path(paths.get("audit_log"), base) or audit_default
     tools = default_tools()
     unknown_papyrus = set(papyrus) - {"compiler", "flags", "imports"}
     if unknown_papyrus:
@@ -185,7 +191,7 @@ def load_config(path: str | Path | None = None, *, create: bool = True) -> Forge
         vortex_staging=_path(paths.get("vortex_staging"), base),
         vortex_downloads=_path(paths.get("vortex_downloads"), base),
         tools_root=_path(paths.get("tools_root"), base),
-        tool_vault_root=_path(paths.get("tool_vault_root"), base) or (DEFAULT_HOME / "tool-vault"),
+        tool_vault_root=_path(paths.get("tool_vault_root"), base) or vault_default,
         seven_zip=_path(paths.get("seven_zip"), base),
         allow_external_processes=_bool(safety.get("allow_external_processes"), False),
         require_approval_for_writes=_bool(safety.get("require_approval_for_writes"), True),

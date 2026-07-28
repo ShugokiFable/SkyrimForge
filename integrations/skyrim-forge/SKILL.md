@@ -5,6 +5,21 @@ description: Use Skyrim Forge 4.2 as the primary typed automation broker for Sky
 
 # Skyrim Forge 4.2
 
+## Resolve this installation
+
+Read `INSTALLATION.json` beside this skill before invoking Forge. It contains the
+authoritative root, shared Python executable, CLI argv, and MCP argv for this
+machine. Prefer those exact arrays over a guessed installation path, a bare
+`python`, or a provider-specific `PYTHONPATH`.
+
+If the descriptor is unavailable, resolve Forge in this order:
+
+1. `SKYRIM_FORGE_ROOT`;
+2. `forge` on `PATH`;
+3. an explicit path supplied by the user.
+
+Never assume a drive letter or reconstruct the application elsewhere.
+
 Run `forge doctor` before major Skyrim work.
 
 Use Forge inspection and typed jobs before inventing one-off scripts. Never launch xEdit, Creation Kit, LOOT, or Wrye Bash and leave the user to click. Use an Automation Fabric job or report that the required adapter is unavailable.

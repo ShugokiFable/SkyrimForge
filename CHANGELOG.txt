@@ -1,0 +1,12 @@
+Skyrim Forge 4.2.5
+
+- Fresh Windows installs can create the missing shared .venv through an explicit,
+  verified Python bootstrap.
+- All supported AI providers receive an exact INSTALLATION.json descriptor.
+- Codex and Grok use the shared runtime through verified MCP registrations.
+- Kimi and Hermes use the same runtime through installed skill and CLI descriptors.
+- The installer preserves user configuration and repairs only Forge-owned runtime paths.
+- Runtime-created virtual environments, reports, caches, and installation descriptors
+  are excluded from public release archives.
+- Supported local tool adapters are resolved by exact executable and SHA-256 pin.
+- Windows and Linux native helpers were rebuilt reproducibly as version 4.2.5.

@@ -16,7 +16,7 @@ from skyrim_forge.plugin_header import inspect_plugin_header
 from skyrim_forge.plugin_writer import build_plugin, validate_plan
 from skyrim_forge.records import query_records
 from skyrim_forge.release import build_release, validate_release_tree
-from skyrim_forge.safety import SafetyError, require_within
+from skyrim_forge.safety import SafetyError, is_within, require_within
 from skyrim_forge.strictjson import loads
 
 
@@ -32,8 +32,25 @@ class CoreTests(unittest.TestCase):
             with patch("pathlib.Path.home", return_value=home):
                 config = load_config(root / "config.toml")
             self.assertTrue(config.workspace_root.is_dir())
+            self.assertEqual(config.workspace_root, root / "Workspaces")
+            self.assertEqual(config.audit_log, root / "audit.jsonl")
+            self.assertEqual(config.tool_vault_root, root / "tool-vault")
             self.assertTrue(config.config_path.is_file())
             self.assertFalse(config.allow_external_processes)
+
+    def test_configured_seven_zip_is_an_allowed_read_target(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            executable = root / "7-Zip" / "7z.exe"
+            executable.parent.mkdir()
+            executable.write_bytes(b"test")
+            config = ForgeConfig(
+                config_path=root / "config.toml",
+                workspace_root=root / "work",
+                audit_log=root / "audit.jsonl",
+                seven_zip=executable,
+            )
+            self.assertTrue(is_within(executable, config.allowed_read_roots))
 
     def test_workspace_escape_and_symlink_rejected(self):
         with tempfile.TemporaryDirectory() as td:

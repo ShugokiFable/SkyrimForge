@@ -8,6 +8,15 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $Source = Join-Path $Root 'integrations\skyrim-forge'
+$InstallationDescriptorPath = Join-Path $Root 'INSTALLATION.json'
+
+if (-not (Test-Path -LiteralPath $InstallationDescriptorPath -PathType Leaf)) {
+    throw 'Forge is not installed. Run Install-or-Update.ps1 before installing provider skills.'
+}
+$InstallationDescriptor = Get-Content -LiteralPath $InstallationDescriptorPath -Raw | ConvertFrom-Json
+if (-not (Test-Path -LiteralPath $InstallationDescriptor.python -PathType Leaf)) {
+    throw "Installed Forge Python is missing: $($InstallationDescriptor.python)"
+}
 
 function Test-ReparsePoint {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -64,6 +73,7 @@ foreach ($Name in $Selected) {
         if (-not (Test-Path -LiteralPath (Join-Path $Stage 'SKILL.md') -PathType Leaf)) {
             throw "Staged Forge skill validation failed for $Name."
         }
+        Copy-Item -LiteralPath $InstallationDescriptorPath -Destination (Join-Path $Stage 'INSTALLATION.json')
         if (Test-Path -LiteralPath $Target) {
             Move-Item -LiteralPath $Target -Destination $Backup
             $MovedExisting = $true
@@ -90,4 +100,5 @@ foreach ($Name in $Selected) {
     }
 
     Write-Host ('{0}: {1}' -f $Name, $Target) -ForegroundColor Green
+    Write-Host ('  Forge root: {0}' -f $InstallationDescriptor.root)
 }

@@ -1,4 +1,4 @@
-# Skyrim Forge 4.2.4
+# Skyrim Forge 4.2.5
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
@@ -20,10 +20,28 @@ The gate maps every bundled file to its origin, author, licence or permission ba
 
 1. Extract the release into a permanent tools folder.
 2. Run `START-HERE.bat`.
-3. Choose **Install or update Forge**.
+3. Choose **Install/update Forge and connect all detected AI apps**.
 4. Configure core paths.
 5. Configure only the external tools actually installed on the machine.
-6. Register MCP and install the Forge skill for the AI applications you use.
+
+If Python 3.11+ is not installed, that explicit menu choice downloads the pinned
+Python 3.13.14 installer from python.org, verifies its SHA-256 and Authenticode
+signature, and performs a per-user install before creating Forge's shared
+`.venv`. No AI-specific `PYTHONPATH` is required.
+
+The same setup installs the Forge skill for Codex, Claude, Grok, Kimi, and
+Hermes. It registers MCP through the verified Codex, Claude, and Grok command
+surfaces when those clients are installed. Kimi and Hermes use the same full
+Forge CLI through their installed skill when no verified MCP registrar is
+available. Every provider skill receives an `INSTALLATION.json` containing the
+exact shared CLI and MCP command arrays.
+
+For unattended setup with an already selected Python executable:
+
+```powershell
+$env:SKYRIM_FORGE_PYTHON = 'C:\Path\To\python.exe'
+.\Install-AI-Bridge.ps1 -Provider All -Yes
+```
 
 External tool execution is disabled by default. UI Automation is separately disabled by default.
 
@@ -69,7 +87,7 @@ Use `docs/NEXUS-PUBLICATION.md`. Forge never treats credit as a substitute for p
 
 ## FOMOD engineering
 
-Forge 4.2.4 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
+Forge 4.2.5 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
 
 C# scripted FOMOD installers are deliberately unsupported because they permit arbitrary code execution. See `docs/FOMOD-ENGINEERING.md`.
 

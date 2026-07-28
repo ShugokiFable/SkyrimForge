@@ -5,8 +5,8 @@ from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parent
 EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784764800"))
-ZIP_TIME = (2026, 7, 23, 0, 0, 0)
-EXCLUDED = {".git", ".venv", "venv", "__pycache__", "dist", "build", ".pytest_cache"}
+ZIP_TIME = (2026, 7, 26, 0, 0, 0)
+EXCLUDED = {".git", ".venv", "venv", ".go-cache", "__pycache__", "dist", "build", ".pytest_cache", "REPORTS", "INSTALLATION.json"}
 GENERATED_REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 
 
@@ -20,7 +20,7 @@ def metadata():
     rows = ["Metadata-Version: 2.4", f"Name: {p['name']}", f"Version: {p['version']}", f"Summary: {p['description']}", f"Requires-Python: {p['requires-python']}", "License-Expression: MIT", "Description-Content-Type: text/markdown"]
     return ("\n".join(rows) + "\n\n" + (ROOT / "README.md").read_text(encoding="utf-8") + "\n").encode()
 
-def wheel_text(): return b"Wheel-Version: 1.0\nGenerator: Skyrim Forge 4.2.4 deterministic backend\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+def wheel_text(): return b"Wheel-Version: 1.0\nGenerator: Skyrim Forge 4.2.5 deterministic backend\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
 def entry_points(): return b"[console_scripts]\nforge = skyrim_forge.cli:main\nskyrim-forge-mcp = skyrim_forge.mcp_server:serve\nskyrim-forge-gui = skyrim_forge.gui:run_gui\n"
 def get_requires_for_build_wheel(config_settings=None): return []
 def get_requires_for_build_sdist(config_settings=None): return []

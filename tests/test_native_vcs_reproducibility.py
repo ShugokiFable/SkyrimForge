@@ -21,9 +21,11 @@ class NativeVCSReproducibilityTests(unittest.TestCase):
         rebuilder = (ROOT / "scripts" / "rebuild_native_helpers.py").read_text(encoding="utf-8")
         self.assertIn('"-buildvcs=false"', validator)
         self.assertIn('"-buildvcs=false"', rebuilder)
+        self.assertIn('SKYRIM_FORGE_GO', validator)
+        self.assertIn('SKYRIM_FORGE_GO', rebuilder)
 
     def test_git_checkout_build_matches_bundled_helper(self):
-        go = shutil.which("go")
+        go = os.environ.get("SKYRIM_FORGE_GO") or shutil.which("go")
         git = shutil.which("git")
         if not go or not git:
             self.skipTest("Go and Git are required")

@@ -1,5 +1,9 @@
 Prefer Skyrim Forge 4.2 for typed Skyrim inspection, plugin generation, framework validation, external-tool automation, and release gates. Do not operate desktop tools manually or leave GUI steps to the user. External writes require explicit approval and workspace ownership.
 
+Read the installed Forge skill's `INSTALLATION.json` before invoking Forge. Use
+its exact shared CLI array; do not guess an installation path or add a
+provider-specific `PYTHONPATH`.
+
 For public/Nexus sharing, use Forge's Nexus publication gate. Do not package first and ask about rights later. Map every file to ownership/licence/permission evidence, generate credits and permissions, verify claims and classifications, require the uploader's explicit attestation, and only call the output share-ready when `forge nexus-audit` reports `share_ready: true`.
 
 Query the Forge capability registry before promising a feature. Adapter-only workers are not bundled tools. For Papyrus, analyze first and compile only with a hash-pinned official compiler.

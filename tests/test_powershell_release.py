@@ -70,6 +70,8 @@ class PowerShellReleaseTests(unittest.TestCase):
         self.assertNotIn('-Root "%~dp0"', tests)
         self.assertIn('if /I "%~1"=="--validate-only" exit /b 0', start)
         self.assertIn('PowerShell-Parse-Gate.ps1', tests)
+        self.assertIn('Install-AI-Bridge.ps1', start)
+        self.assertIn('-BootstrapPython -Yes', start)
 
     def test_parser_gate_defaults_to_its_own_directory_and_sanitizes_legacy_quote(self):
         gate = (ROOT / 'PowerShell-Parse-Gate.ps1').read_text(encoding='utf-8-sig')
@@ -77,6 +79,37 @@ class PowerShellReleaseTests(unittest.TestCase):
         self.assertIn('$PSScriptRoot', gate)
         self.assertIn("$Root.Trim().Trim([char]34)", gate)
         self.assertIn('Resolve-Path -LiteralPath $CandidateRoot', gate)
+
+    def test_python_bootstrap_is_pinned_and_verified(self):
+        installer = (ROOT / 'Install-or-Update.ps1').read_text(encoding='utf-8-sig')
+        self.assertIn('https://www.python.org/ftp/python/3.13.14/', installer)
+        self.assertIn('C54D9B9BBB8A36E6489363DDD01139707FD781D72F1F9E90C7EC65D0061368E0', installer)
+        self.assertIn('Get-AuthenticodeSignature', installer)
+        self.assertIn('Python Software Foundation', installer)
+        self.assertIn("'existing-forge-venv'", installer)
+        self.assertIn("HKCU:\\SOFTWARE\\Python\\PythonCore", installer)
+        self.assertIn("SetEnvironmentVariable('SKYRIM_FORGE_ROOT'", installer)
+        self.assertIn("'INSTALLATION.json'", installer)
+        self.assertIn("'workers\\SkyrimForge.UIWorker.ps1'", installer)
+        self.assertIn("'tools.ui_worker.worker_sha256'", installer)
+
+    def test_provider_bridge_uses_exact_shared_runtime(self):
+        register = (ROOT / 'Register-MCP.ps1').read_text(encoding='utf-8-sig')
+        skill_installer = (ROOT / 'Install-Forge-Skill.ps1').read_text(encoding='utf-8-sig')
+        skill = (ROOT / 'integrations' / 'skyrim-forge' / 'SKILL.md').read_text(encoding='utf-8-sig')
+        self.assertIn("Join-Path $Root '.venv\\Scripts\\python.exe'", register)
+        self.assertIn('mcp add skyrim-forge -- $Python -m skyrim_forge mcp', register)
+        self.assertIn("'mcp', 'add', '--scope', 'user', 'skyrim-forge', '--'", register)
+        self.assertIn("Start-Process -FilePath $Executable -ArgumentList $GrokArguments", register)
+        self.assertIn("'.grok\\bin\\grok.exe'", register)
+        self.assertIn("Grok MCP verification did not return the exact enabled Forge command.", register)
+        self.assertIn('mcp | Out-Null', register)
+        self.assertIn("mode = 'skill-cli'", register)
+        self.assertIn("'Kimi', 'Hermes'", register)
+        self.assertNotIn('$Name?', register)
+        self.assertIn('${Name}?', register)
+        self.assertIn("'INSTALLATION.json'", skill_installer)
+        self.assertIn('Read `INSTALLATION.json` beside this skill', skill)
 
 
 if __name__ == '__main__':

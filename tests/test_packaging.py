@@ -21,5 +21,12 @@ class PackagingTests(unittest.TestCase):
                 self.assertIsNone(archive.testzip())
                 self.assertIn("skyrim_forge/bin/win-x64/SkyrimForge.Native.exe",archive.namelist())
 
+    def test_runtime_installation_artifacts_are_never_packaged(self):
+        excluded = forge_build_backend.EXCLUDED
+        self.assertIn("INSTALLATION.json", excluded)
+        self.assertIn("REPORTS", excluded)
+        self.assertIn(".venv", excluded)
+        self.assertIn(".go-cache", excluded)
+
 
 if __name__ == "__main__": unittest.main()

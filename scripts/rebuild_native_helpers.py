@@ -16,13 +16,14 @@ PACKAGE_TARGETS = {
     "linux": ROOT / "skyrim_forge" / "bin" / "linux-x64" / "SkyrimForge.Native",
     "windows": ROOT / "skyrim_forge" / "bin" / "win-x64" / "SkyrimForge.Native.exe",
 }
+GO = os.environ.get("SKYRIM_FORGE_GO") or shutil.which("go") or "go"
 
 
 def build(target: str) -> None:
     output, environment = TARGETS[target]
     output.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy(); env.update(environment)
-    command = ["go", "build", "-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid=", "-o", str(output), "."]
+    command = [GO, "build", "-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid=", "-o", str(output), "."]
     subprocess.run(command, cwd=SOURCE, env=env, check=True)
     package = PACKAGE_TARGETS[target]
     package.parent.mkdir(parents=True, exist_ok=True)
