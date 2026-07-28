@@ -158,12 +158,12 @@ jobs:
           ./Install-Forge-Skill.ps1 -Provider All
           ./Install-Forge-Skill.ps1 -Provider All
           $sourceHash = (Get-FileHash -LiteralPath './integrations/skyrim-forge/SKILL.md' -Algorithm SHA256).Hash
-          foreach ($home in @($env:CODEX_HOME, $env:CLAUDE_CONFIG_DIR, $env:GROK_HOME, $env:KIMI_CODE_HOME, $env:HERMES_HOME)) {
-            $installed = Join-Path $home 'skills/skyrim-forge/SKILL.md'
+          foreach ($skillHome in @($env:CODEX_HOME, $env:CLAUDE_CONFIG_DIR, $env:GROK_HOME, $env:KIMI_CODE_HOME, $env:HERMES_HOME)) {
+            $installed = Join-Path $skillHome 'skills/skyrim-forge/SKILL.md'
             if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) { throw "Installed skill missing: $installed" }
             $installedHash = (Get-FileHash -LiteralPath $installed -Algorithm SHA256).Hash
             if ($installedHash -ne $sourceHash) { throw "Installed skill hash mismatch: $installed" }
-            $descriptor = Join-Path $home 'skills/skyrim-forge/INSTALLATION.json'
+            $descriptor = Join-Path $skillHome 'skills/skyrim-forge/INSTALLATION.json'
             if (-not (Test-Path -LiteralPath $descriptor -PathType Leaf)) { throw "Installed Forge descriptor missing: $descriptor" }
           }
       - name: Verify skill-only provider bridge

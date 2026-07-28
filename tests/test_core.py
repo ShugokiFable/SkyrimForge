@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import os
 import stat
@@ -68,6 +69,10 @@ class CoreTests(unittest.TestCase):
     def test_framework_regressions(self):
         report = framework_self_test()
         self.assertEqual(report["result"], "PASS", report)
+
+    def test_native_module_parses_with_python_311_grammar(self):
+        source = (Path(__file__).parents[1] / "skyrim_forge" / "native.py").read_text(encoding="utf-8")
+        ast.parse(source, filename="skyrim_forge/native.py", feature_version=(3, 11))
 
     def test_plugin_build_and_query(self):
         with tempfile.TemporaryDirectory() as td:

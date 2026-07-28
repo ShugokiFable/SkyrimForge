@@ -117,13 +117,14 @@ def _cmake(plan: dict[str, Any]) -> str:
         f'MINIMUM_SKSE_VERSION "{plan["minimum_skse_version"]}"',
         "SOURCES src/plugin.cpp",
     ])
+    options_block = "\n    ".join(opts)
     return f'''cmake_minimum_required(VERSION 3.24)
 project({plan["project"]} VERSION {plan["version"]} LANGUAGES CXX)
 
 find_package(CommonLibSSE CONFIG REQUIRED)
 
 add_commonlibsse_plugin(${{PROJECT_NAME}}
-    {'\n    '.join(opts)}
+    {options_block}
 )
 target_compile_features(${{PROJECT_NAME}} PRIVATE cxx_std_23)
 target_precompile_headers(${{PROJECT_NAME}} PRIVATE src/PCH.h)
