@@ -93,8 +93,6 @@ jobs:
     name: Windows installer and legacy migration
     runs-on: windows-latest
     timeout-minutes: 15
-    env:
-      SKYRIM_FORGE_CONFIG: ${{ runner.temp }}/skyrim-forge/config.toml
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -108,6 +106,7 @@ jobs:
         run: |
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
           [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_PYTHON=${{ steps.python.outputs.python-path }}`n", $utf8NoBom)
+          [IO.File]::AppendAllText($env:GITHUB_ENV, "SKYRIM_FORGE_CONFIG=$env:RUNNER_TEMP\skyrim-forge\config.toml`n", $utf8NoBom)
           & "${{ steps.python.outputs.python-path }}" --version
       - name: Parse every PowerShell script
         shell: powershell
