@@ -16,8 +16,12 @@ KID_SIGNATURES = {"WEAP", "ARMO", "AMMO", "MGEF", "ALCH", "SCRL", "LCTN", "INGR"
 SPID_TYPES = {"Form", "Spell", "Perk", "Item", "Shout", "LevSpell", "Package", "Outfit", "Keyword", "Faction", "SleepOutfit", "Skin"}
 # These are demonstrated generator mistakes, not merely unknown future syntax.
 SPID_KNOWN_INVALID_KEYS = {"Weapon"}
+SPID_SINGLE_SKILL = "spid-single-value-skill-filter"
 SPID_TRAITS = {"M", "-F", "F", "-M", "U", "-U", "S", "-S", "C", "-C", "L", "-L", "T", "-T", "D", "-D"}
-SKYPATCHER_CATEGORIES = {"npc", "weapon", "armor", "ammo", "race", "spell", "scroll", "alchemy", "book", "cell", "constructibleobject", "container", "enchantment", "formlist", "leveledlist", "location", "magiceffect", "other"}
+# Every category below is attested by an installed mod in the reference corpus.
+# outfit, ingestible, misc, ingredient and projectile were missing and produced
+# warnings against configurations that ship and work.
+SKYPATCHER_CATEGORIES = {"npc", "weapon", "armor", "ammo", "race", "spell", "scroll", "alchemy", "book", "cell", "constructibleobject", "container", "enchantment", "formlist", "leveledlist", "location", "magiceffect", "other", "outfit", "ingestible", "misc", "ingredient", "projectile"}
 BOS_SECTIONS = {"forms", "references", "transforms", "properties"}
 FLM_KEYS = {"alias", "group", "collection", "filter", "modevent", "modeventremove", "formlist", "remove", "plant", "btoys", "gtoys", "haircolors", "atronachforge", "atronachforgesigil", "dragonbornspidercrafting"}
 PROFILE_EVIDENCE = {"spid": "SPID 7.3 documented grammar subset", "kid": "KID 4.0.6 documented grammar subset", "bos": "BOS 3.4.1 documented core grammar", "skypatcher": "SkyPatcher 6.4.2 placement and core rule shape", "flm": "FLM 1.8.1 documented core grammar", "cdf": "Pinned CDF JSON subset"}
@@ -45,9 +49,18 @@ def _strip_inline_comment(line: str) -> str:
 
 
 def _active(path: Path) -> list[tuple[int, str]]:
+    """Yield the meaningful lines of a framework config.
+
+    `utf-8-sig` removes one leading BOM. Real files carry more: configs
+    assembled by concatenation or edited by successive tools appear in the
+    reference corpus with three stacked BOMs at the top and with a BOM in the
+    middle of the file where two sources were joined. A surviving U+FEFF stops a
+    comment from looking like a comment and turns a valid key into an unknown
+    one, so every line is stripped of it before anything else looks at it.
+    """
     result = []
     for number, raw in enumerate(path.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
-        line = _strip_inline_comment(raw).strip()
+        line = _strip_inline_comment(raw).replace("﻿", "").strip()
         if line and not line.startswith((";", "#", "//")):
             result.append((number, line))
     return result
@@ -102,7 +115,21 @@ def _lint_spid_level_filters(value: str, line: int) -> list[dict[str, Any]]:
             if not 0 <= index <= 17:
                 issues.append({"severity": "error", "line": line, "message": f"SPID skill index outside 0-17: {token!r}"})
                 continue
-            problem = _spid_numeric_range(skill.group(3), allow_single=False, label="skill")
+            inner = skill.group(3).strip()
+            if re.fullmatch(r"\d+", inner):
+                # A single value here is NOT categorically malformed. In the
+                # reference corpus 13,427 such filters are installed across
+                # skill indices 12-16 and the SPID runtime log records zero
+                # parse failures for them; one row was traced end to end
+                # (Abyss `14(20)` -> SPEL:FE059810 distributed). The only
+                # runtime rejections observed were five rows using skill index
+                # 0 with a single value, alongside an actor-level range. Forge
+                # cannot currently tell those apart, and refusing 13,427
+                # working rows to catch 5 is the worse error, so this is
+                # reported rather than failed.
+                issues.append({"severity": "warning", "line": line, "code": SPID_SINGLE_SKILL, "message": f"SPID skill filter {token!r} uses a single value rather than min/max. This form is runtime-proven to work for most skill indices; a few index-0 cases were rejected by SPID. Confirm against po3_SpellPerkItemDistributor.log before changing it."})
+                continue
+            problem = _spid_numeric_range(inner, allow_single=False, label="skill")
             if problem:
                 issues.append({"severity": "error", "line": line, "message": problem})
             continue
@@ -113,6 +140,25 @@ def _lint_spid_level_filters(value: str, line: int) -> list[dict[str, Any]]:
     if actor_ranges > 1:
         issues.append({"severity": "warning", "line": line, "message": "SPID accepts only one actor-level expression; only the last one is used"})
     return issues
+
+def _collapse_advisories(issues: list[dict[str, Any]], code: str, summary: str) -> list[dict[str, Any]]:
+    """Fold a repeated advisory into one entry naming the first line and count.
+
+    A per-line note is right for a defect and wrong for a house style: one file
+    in the reference corpus produces this note on thousands of lines, which
+    buries the findings that need acting on.
+    """
+    tagged = [item for item in issues if item.get("code") == code]
+    if len(tagged) <= 1:
+        for item in tagged:
+            item.pop("code", None)
+        return issues
+    kept = [item for item in issues if item.get("code") != code]
+    first = tagged[0]
+    kept.append({"severity": "warning", "line": first["line"],
+                 "message": f"{summary} {len(tagged)} lines in this file, first at line {first['line']}. {first['message']}"})
+    return sorted(kept, key=lambda item: item.get("line", 0))
+
 
 def _lint_spid(path: Path) -> list[dict[str, Any]]:
     issues = []
@@ -151,7 +197,7 @@ def _lint_spid(path: Path) -> list[dict[str, Any]]:
                     numeric = float(chance.rstrip("!"))
                     if not 0 <= numeric <= 100:
                         issues.append({"severity": "error", "line": number, "message": f"SPID chance outside 0-100: {chance!r}"})
-    return issues
+    return _collapse_advisories(issues, SPID_SINGLE_SKILL, "SPID single-value skill filters appear on")
 
 
 def _lint_kid(path: Path) -> list[dict[str, Any]]:
@@ -164,11 +210,14 @@ def _lint_kid(path: Path) -> list[dict[str, Any]]:
             continue
         key, value = [part.strip() for part in line.split("=", 1)]
         fields = [part.strip() for part in value.split("|")]
-        if key == "ExclusiveGroup":
+        # KID reads its keys case-insensitively; `keyword = ...` is used by
+        # shipping mods and distributes normally.
+        folded = key.casefold()
+        if folded == "exclusivegroup":
             if len(fields) != 2 or not all(fields):
                 issues.append({"severity": "error", "line": number, "message": "KID ExclusiveGroup requires Group|KeywordList"})
             continue
-        if key != "Keyword":
+        if folded != "keyword":
             issues.append({"severity": "error", "line": number, "message": f"Invalid KID key {key!r}"})
             continue
         if not 2 <= len(fields) <= 5:
@@ -178,7 +227,10 @@ def _lint_kid(path: Path) -> list[dict[str, Any]]:
         if fields[1] in KID_SIGNATURES:
             issues.append({"severity": "error", "line": number, "message": f"KID record signature {fields[1]!r} is invalid here; use the exact human-readable type label"})
         elif fields[1] not in KID_TYPES:
-            issues.append({"severity": "error", "line": number, "message": f"Unsupported KID type label {fields[1]!r}"})
+            # Field 2 is not always a type label: a two-field line filters by
+            # name instead, and such lines are runtime-proven to distribute.
+            # Report the unrecognised token without failing the file.
+            issues.append({"severity": "warning", "line": number, "message": f"KID field 2 {fields[1]!r} is not a known type label; treated as a filter. Verify against the installed KID version."})
         if fields[4]:
             try:
                 chance = float(fields[4])
@@ -256,10 +308,16 @@ def _lint_skypatcher(path: Path) -> list[dict[str, Any]]:
         left, right = line.split(":", 1)
         if not left.strip() or not right.strip():
             issues.append({"severity": "error", "line": number, "message": "SkyPatcher rule requires non-empty filter and patch sides"})
+        # A rule is `key=value` clauses separated by ':'. A clause VALUE is
+        # frequently a comma-separated list of forms:
+        #   filterByLLNPCs=Skyrim.esm|0x01E78D:removeFromLLs=A.esp|001DBD, A.esp|001DC8
+        # Splitting a side on ',' and demanding '=' in every element therefore
+        # reported each form after the first as unmodeled syntax. Validate the
+        # clause, not the list items.
         for side_name, side in (("filter", left), ("patch", right)):
-            for token in side.split(","):
-                if token.strip() and "=" not in token:
-                    issues.append({"severity": "warning", "line": number, "message": f"SkyPatcher {side_name} token lacks '=' and is outside the modeled profile: {token.strip()!r}"})
+            for clause in side.split(":"):
+                if clause.strip() and "=" not in clause:
+                    issues.append({"severity": "warning", "line": number, "message": f"SkyPatcher {side_name} clause lacks '=' and is outside the modeled profile: {clause.strip()[:80]!r}"})
     return issues
 
 

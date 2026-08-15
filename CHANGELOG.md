@@ -1,5 +1,42 @@
 # Changelog
 
+## 5.1.0
+
+Framework linting, validated against a real reference corpus for the first time.
+
+Forge's SPID/KID/BOS/FLM/SkyPatcher profiles were written from documentation
+with no installed mods to check them against. Run over 1,195 framework configs
+from a live 3,000-mod load order, the linter reported **13,554 errors and 11,762
+warnings across 16% of files**. Triaged against the frameworks' own SKSE runtime
+logs, essentially all of it was false. After these fixes the same corpus reports
+**11 errors and 71 warnings across 5% of files**, and the 11 are genuine
+third-party defects.
+
+- Fixed SkyPatcher clause values being split on commas. A value is routinely a
+  comma-separated form list (`removeFromLLs=A.esp|001DBD, A.esp|001DC8`), and
+  every form after the first was reported as unmodeled syntax. 11,730 warnings
+  from one parsing error; rules are now validated per `key=value` clause.
+- Fixed a single-value SPID skill filter being an error. The corpus installs
+  13,427 of them across skill indices 12-16 with **zero** parse failures in
+  `po3_SpellPerkItemDistributor.log`, and one was traced end to end: Abyss's
+  `14(20)` distributed as `SPEL:FE059810`. Five rows using index 0 were rejected
+  at runtime, so the observation is kept as an advisory - failing 13,427 working
+  rows to catch 5 is the worse error. Runtime evidence outranks a static profile.
+- Fixed the advisory burying everything else: a repeated note is now collapsed to
+  one entry per file naming the count and first line, not one per line.
+- Added the SkyPatcher categories `outfit`, `ingestible`, `misc`, `ingredient`
+  and `projectile`. All five are installed and working; none were in the profile.
+- Fixed KID keys being matched case-sensitively. Shipping mods write
+  `keyword =`, and `BoobiesArmorPouch [KYWD:FF001DA3]` distributes from one.
+- Fixed a two-field KID line being rejected as an unsupported type label. Field 2
+  is a name filter there, and `BoobiesArmorScarf [KYWD:FF001DA5]` applied at
+  runtime. Now an advisory naming the unrecognised token.
+- Fixed surviving byte-order marks inventing findings. `utf-8-sig` strips one;
+  corpus files carry three stacked at the top and one mid-file where two sources
+  were concatenated. A surviving U+FEFF stopped a comment from being a comment
+  and turned a valid key into an unknown one.
+- Added `InstalledCorpusRegressionTests`, built from the real installed lines.
+
 ## 5.0.2
 
 - Fixed the installed AI skill advertising "Skyrim Forge 4.2" from inside a 5.0

@@ -1,3 +1,3 @@
-Skyrim Forge 5.0.2
-Parent: Skyrim Forge 5.0.1 (v5.0.1, 5d2172f)
+Skyrim Forge 5.1.0
+Parent: Skyrim Forge 5.0.2 (v5.0.2, 3982a82)
 Status: active release snapshot

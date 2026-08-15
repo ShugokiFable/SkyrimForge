@@ -1,3 +1,23 @@
+Skyrim Forge 5.1.0
+
+Framework linting was checked against a real mod corpus for the first time.
+
+Against 1,195 SPID/KID/FLM/SkyPatcher configs from a live 3,000-mod load order,
+the linter reported 13,554 errors and 11,762 warnings. Checked against the
+frameworks' own runtime logs, almost all of it was wrong. It now reports 11
+errors and 71 warnings on the same corpus, and those 11 are real mod defects.
+
+- SkyPatcher values may be comma-separated form lists. Every form after the first
+  used to be flagged. That alone was 11,730 warnings.
+- A single-value SPID skill filter like 14(20) is no longer an error. 13,427 of
+  them are installed and the SPID log shows no parse failures; one was traced to
+  a successful distribution.
+- Repeated advisories are summarised once per file instead of once per line.
+- SkyPatcher outfit, ingestible, misc, ingredient and projectile categories are
+  recognised.
+- KID keys are case-insensitive, and a two-field KID line is valid.
+- Stacked and mid-file byte-order marks no longer invent findings.
+
 Skyrim Forge 5.0.2
 
 - The installed AI skill said "Skyrim Forge 4.2" inside a 5.0 install. That line

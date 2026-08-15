@@ -1,7 +1,7 @@
 # State
 
-- Active version: 5.0.2
-- Parent: v5.0.1 at 5d2172f
+- Active version: 5.1.0
+- Parent: v5.0.2 at 3982a82
 - Original symptom: FOMOD validation rejected installers that are legal per the
   published ModConfig5.0 schema, most importantly any option carrying a
   screenshot
@@ -11,7 +11,7 @@
   configuration error, blocking four open pull requests
 - Runtime status: repository validation and MCP protocol behaviour are
   tool-validated
-- Preserved rollback release: 5.0.1
+- Preserved rollback release: 5.0.2
 - Shared runtime: `.venv\Scripts\python.exe`
 - MCP era support: dual-era. `server/discover`, per-request `_meta` version
   negotiation and `UnsupportedProtocolVersionError` for `2026-07-28`; the
@@ -22,7 +22,7 @@
 - Version sources: one source of truth in `skyrim_forge/version.py`; seven
   restatements (including the AI skill series) are gated against it and CI derives the native version string
   instead of hardcoding it
-- Repository validation: PASS, 135 tests
+- Repository validation: PASS, 142 tests
 - Native helpers: rebuilt with pinned Go 1.23.2; two-build reproducibility PASS
   for Windows x64 and Linux x64; packaged and published copies hash-equal
 - Remaining runtime boundary: Skyrim gameplay and third-party GUI behavior are

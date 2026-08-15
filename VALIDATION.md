@@ -2,12 +2,12 @@
 
 ## Current results
 
-- Source regression suite: PASS, 135 tests (1 skipped).
+- Source regression suite: PASS, 142 tests (1 skipped).
 - Full repository validator, `--scope full`: PASS with zero errors.
 - PowerShell parser gate: PASS for all Forge-owned scripts.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
   Two-build reproducibility PASS; packaged and published helpers hash-equal;
-  the rebuilt helper reports `SkyrimForge.Native 5.0.1 go` and self-tests PASS.
+  the rebuilt helper reports `SkyrimForge.Native 5.1.0 go` and self-tests PASS.
 - Go format, vet, tests and race test: PASS.
 - Wheel and source distribution builds: PASS and deterministic.
 - MCP static surface: 52 tools, 19 resources, 7 prompts.
