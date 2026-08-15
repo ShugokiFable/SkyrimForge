@@ -330,20 +330,37 @@ class FomodSchemaHardeningTests(unittest.TestCase):
             report = validate_fomod(root, strict_coverage=False)
             self.assertEqual(report["result"], "PASS", report)
 
-    def test_canonical_schema_location_and_csharp_are_rejected(self):
+    def test_schema_location_is_reported_but_never_fatal(self):
+        """`xsi:noNamespaceSchemaLocation` is an optional XML hint.
+
+        ModConfig5.0.xsd does not require it and no manager reads it, so
+        enforcing it failed installers that Vortex and MO2 install without
+        complaint. It is reported as a warning and the structure is still
+        validated.
+        """
         from skyrim_forge.fomod import plan_to_xml, _write_xml, XSI
 
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            create_payload(root)
-            normalized = validate_plan_data(sample_plan())
-            config_tree, info_tree = plan_to_xml(normalized)
-            config_tree.getroot().set(f"{{{XSI}}}noNamespaceSchemaLocation", "wrong.xsd")
-            _write_xml(config_tree, root / "fomod" / "ModuleConfig.xml")
-            _write_xml(info_tree, root / "fomod" / "info.xml")
-            report = validate_fomod(root, strict_coverage=False)
-            self.assertEqual(report["result"], "FAIL")
-            self.assertTrue(any("canonical schema-location" in item for item in report["errors"]))
+        for value in ("wrong.xsd", "https://qconsulting.ca/fo3/ModConfig5.0.xsd", None):
+            with tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                create_payload(root)
+                normalized = validate_plan_data(sample_plan())
+                config_tree, info_tree = plan_to_xml(normalized)
+                attribute = f"{{{XSI}}}noNamespaceSchemaLocation"
+                if value is None:
+                    config_tree.getroot().attrib.pop(attribute, None)
+                else:
+                    config_tree.getroot().set(attribute, value)
+                _write_xml(config_tree, root / "fomod" / "ModuleConfig.xml")
+                _write_xml(info_tree, root / "fomod" / "info.xml")
+                report = validate_fomod(root, strict_coverage=False)
+                self.assertEqual(report["result"], "PASS", f"schema location {value!r} must not fail validation")
+                self.assertFalse([e for e in report["errors"] if "schema" in e.lower()])
+            if value != "https://qconsulting.ca/fo3/ModConfig5.0.xsd":
+                self.assertTrue(any("schema location" in w or "noNamespaceSchemaLocation" in w for w in report["warnings"]))
+
+    def test_csharp_installer_is_still_refused(self):
+        from skyrim_forge.fomod import plan_to_xml, _write_xml
 
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -356,6 +373,95 @@ class FomodSchemaHardeningTests(unittest.TestCase):
             report = validate_fomod(root, strict_coverage=False)
             self.assertEqual(report["result"], "FAIL")
             self.assertTrue(any("C# scripted" in item for item in report["errors"]))
+
+
+SCHEMA_ATTRS = ('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+                'xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd"')
+MINIMAL_INFO = '<?xml version="1.0" encoding="utf-8"?>\n<fomod><Name>P</Name><Version>1.0</Version></fomod>\n'
+
+
+def write_third_party_fomod(root: Path, plugin_body: str, module_dependencies: str = "") -> None:
+    """Write a FOMOD that is legal per ModConfig5.0.xsd, as a real mod ships it."""
+    (root / "fomod").mkdir(parents=True, exist_ok=True)
+    (root / "core").mkdir(parents=True, exist_ok=True)
+    (root / "core" / "Probe.esp").write_bytes(b"TES4probe")
+    (root / "fomod" / "option.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    config = (
+        f'<?xml version="1.0" encoding="utf-8"?>\n<config {SCHEMA_ATTRS}>\n'
+        "  <moduleName>Probe</moduleName>\n"
+        f"{module_dependencies}"
+        '  <installSteps order="Explicit">\n    <installStep name="Main">\n'
+        '      <optionalFileGroups order="Explicit">\n'
+        '        <group name="G" type="SelectExactlyOne">\n'
+        '          <plugins order="Explicit">\n'
+        f"{plugin_body}\n"
+        "          </plugins>\n        </group>\n"
+        "      </optionalFileGroups>\n    </installStep>\n  </installSteps>\n</config>\n"
+    )
+    (root / "fomod" / "ModuleConfig.xml").write_text(config, encoding="utf-8")
+    (root / "fomod" / "info.xml").write_text(MINIMAL_INFO, encoding="utf-8")
+
+
+class ThirdPartyFomodFalsePositiveTests(unittest.TestCase):
+    """Installers that Vortex and MO2 accept must not be failed by Forge.
+
+    Forge is meant to be the last gate a mod passes, which makes a false
+    rejection more expensive than a missed nicety: it teaches the author to stop
+    trusting the gate. Each case here is legal per the official
+    ModConfig5.0.xsd and was rejected before 5.0.1.
+    """
+
+    def test_plugin_with_an_option_image_is_accepted(self):
+        # XSD plugin sequence: description, image?, (files|conditionFlags...), typeDescriptor.
+        # The optional image was not allowed for, so every option carrying a
+        # screenshot - which is most of them - was rejected.
+        body = ('            <plugin name="Core">\n'
+                "              <description>Core.</description>\n"
+                '              <image path="fomod/option.png" />\n'
+                '              <files><folder source="core" destination="" /></files>\n'
+                '              <typeDescriptor><type name="Required" /></typeDescriptor>\n'
+                "            </plugin>")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_third_party_fomod(root, body)
+            report = validate_fomod(root, strict_coverage=True)
+            self.assertEqual(report["result"], "PASS", report["errors"])
+
+    def test_game_specific_version_dependency_is_recorded_not_refused(self):
+        # The fo3 schema Forge names as canonical exists to add foseDependency.
+        # Refusing it contradicted the schema the validator asks for.
+        body = ('            <plugin name="Core">\n'
+                "              <description>Core.</description>\n"
+                '              <files><folder source="core" destination="" /></files>\n'
+                '              <typeDescriptor><type name="Required" /></typeDescriptor>\n'
+                "            </plugin>")
+        deps = ('  <moduleDependencies operator="And">\n'
+                '    <foseDependency version="1.2" />\n'
+                "  </moduleDependencies>\n")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_third_party_fomod(root, body, module_dependencies=deps)
+            report = validate_fomod(root, strict_coverage=True)
+            self.assertEqual(report["result"], "PASS", report["errors"])
+            self.assertTrue(any("foseDependency" in w for w in report["warnings"]))
+
+    def test_unreferenced_payload_names_the_files_it_rejects(self):
+        # A gate that says "1 unreferenced file(s)" without naming it cannot be
+        # acted on. Coverage stays strict; the message became usable.
+        body = ('            <plugin name="Core">\n'
+                "              <description>Core.</description>\n"
+                '              <files><folder source="core" destination="" /></files>\n'
+                '              <typeDescriptor><type name="Required" /></typeDescriptor>\n'
+                "            </plugin>")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_third_party_fomod(root, body)
+            (root / "orphan").mkdir()
+            (root / "orphan" / "Unused.esp").write_bytes(b"TES4unused")
+            report = validate_fomod(root, strict_coverage=True)
+            self.assertEqual(report["result"], "FAIL")
+            self.assertTrue(any("orphan/Unused.esp" in e for e in report["errors"]),
+                            f"error must name the offending file: {report['errors']}")
 
 
 class ExistingFomodCompatibilityTests(unittest.TestCase):

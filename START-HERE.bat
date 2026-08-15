@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions
-title Skyrim Forge 5.0.0
+title Skyrim Forge 5.0.1
 set "FORGE_PS_GATE=%~dp0PowerShell-Parse-Gate.ps1"
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%FORGE_PS_GATE%"
 if errorlevel 1 (
@@ -14,7 +14,7 @@ if /I "%~1"=="--validate-only" exit /b 0
 cls
 echo.
 echo ================================================================
-echo  SKYRIM FORGE 5.0.0 - VERIFIED TOOLCHAIN FABRIC
+echo  SKYRIM FORGE 5.0.1 - VERIFIED TOOLCHAIN FABRIC
 echo ================================================================
 echo.
 echo  1. Install/update Forge and connect all detected AI apps

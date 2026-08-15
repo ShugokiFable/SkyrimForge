@@ -1,17 +1,17 @@
 # State
 
-- Active version: 5.0.0
-- Parent: v4.2.5 at 004c5f0
-- Original symptom: the MCP server implemented only handshake-era protocol
-  revisions, so a client speaking the current `2026-07-28` revision could not
-  negotiate with it at all
+- Active version: 5.0.1
+- Parent: v5.0.0 at 1c04f12
+- Original symptom: FOMOD validation rejected installers that are legal per the
+  published ModConfig5.0 schema, most importantly any option carrying a
+  screenshot
 - Secondary symptom: the published `MANIFEST.json` did not verify against a
   `git clone` of the repository it shipped in
 - Tertiary symptom: every CodeQL run on a Dependabot branch failed with a
   configuration error, blocking four open pull requests
 - Runtime status: repository validation and MCP protocol behaviour are
   tool-validated
-- Preserved rollback release: 4.2.5
+- Preserved rollback release: 5.0.0
 - Shared runtime: `.venv\Scripts\python.exe`
 - MCP era support: dual-era. `server/discover`, per-request `_meta` version
   negotiation and `UnsupportedProtocolVersionError` for `2026-07-28`; the
@@ -22,7 +22,7 @@
 - Version sources: one source of truth in `skyrim_forge/version.py`; seven
   restatements are gated against it and CI derives the native version string
   instead of hardcoding it
-- Repository validation: PASS, 131 tests
+- Repository validation: PASS, 134 tests
 - Native helpers: rebuilt with pinned Go 1.23.2; two-build reproducibility PASS
   for Windows x64 and Linux x64; packaged and published copies hash-equal
 - Remaining runtime boundary: Skyrim gameplay and third-party GUI behavior are

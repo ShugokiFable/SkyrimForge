@@ -1,3 +1,23 @@
+Skyrim Forge 5.0.1
+
+FOMOD validation false positives are fixed. Forge is meant to be the last check a
+mod passes before it ships, so a wrong rejection is worse than a missed nicety.
+Each of these refused an installer that is valid per the official ModuleConfig 5.0
+schema and that Vortex and MO2 install without complaint.
+
+- An option with a screenshot is no longer rejected. The optional <image> element
+  is allowed exactly where the schema puts it. This affected most real installers.
+- The xsi:noNamespaceSchemaLocation attribute is no longer mandatory. It is an
+  optional hint that no mod manager reads. Omitting it, or using https, previously
+  failed the entire installer. It is now a warning.
+- foseDependency, nvseDependency, and skseDependency are recorded as unverified
+  instead of rejected. The schema Forge itself asks for is the one that defines
+  them.
+- The unreferenced-payload error now names the files instead of only counting
+  them. Coverage checking is still strict.
+
+C# scripted installers are still refused. They permit arbitrary code execution.
+
 Skyrim Forge 5.0.0
 
 - Forge speaks the current MCP revision, 2026-07-28, which replaced the
@@ -17,8 +37,8 @@ Skyrim Forge 5.0.0
 - The product version now has one source of truth, and every other copy of it is
   checked against that source before release.
 - actions/checkout 7.0.1, actions/setup-python 7.0.0, and codeql-action 4.37.6.
-- Windows and Linux native helpers were rebuilt reproducibly as version 5.0.0
-  with pinned Go 1.23.2.
+- Windows and Linux native helpers were rebuilt reproducibly with pinned Go
+  1.23.2.
 
 Safety boundaries are unchanged. Forge still never launches a GUI, never runs
 arbitrary shell commands, never writes to live Skyrim Data, keeps external

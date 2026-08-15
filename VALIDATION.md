@@ -2,12 +2,12 @@
 
 ## Current results
 
-- Source regression suite: PASS, 131 tests (1 skipped).
+- Source regression suite: PASS, 134 tests (1 skipped).
 - Full repository validator, `--scope full`: PASS with zero errors.
 - PowerShell parser gate: PASS for all Forge-owned scripts.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
   Two-build reproducibility PASS; packaged and published helpers hash-equal;
-  the rebuilt helper reports `SkyrimForge.Native 5.0.0 go` and self-tests PASS.
+  the rebuilt helper reports `SkyrimForge.Native 5.0.1 go` and self-tests PASS.
 - Go format, vet, tests and race test: PASS.
 - Wheel and source distribution builds: PASS and deterministic.
 - MCP static surface: 52 tools, 19 resources, 7 prompts.
@@ -37,6 +37,29 @@ the reports, the second pass is the gate that must return PASS.
 python scripts/validate_repository.py --scope full --write-reports
 python scripts/validate_repository.py --scope full --write-reports
 ```
+
+## FOMOD false positives (5.0.1)
+
+Each case below is legal per the published `ModConfig5.0.xsd` and was rejected
+before 5.0.1. Evidence: fixtures built directly from the schema, run against
+`validate_fomod`, failing before the fix and passing after.
+
+| Case | Before | After |
+|---|---|---|
+| Option carrying an `<image>` | FAIL "must contain files or conditionFlags in ModuleConfig 5.0 order" | PASS |
+| `xsi:noNamespaceSchemaLocation` omitted | FAIL "must use the canonical schema-location token" | PASS + warning |
+| Schema location spelled with `https` | FAIL | PASS, no comment |
+| `foseDependency` | FAIL "Unsupported dependency element" | PASS + unverified warning |
+
+The first is the significant one: the schema sequence is `description, image?,
+(files, conditionFlags? | conditionFlags, files?), typeDescriptor`, and the
+optional image was not allowed for, so any option with a screenshot was refused.
+
+Verified not to be false positives, and left strict: unreferenced payload under
+`strict_coverage`, missing source paths, ambiguous destination collisions,
+undefined and temporally-unavailable condition flags, path traversal, and C#
+scripted installers. Images referenced by `path=` outside `fomod/` were already
+counted as covered.
 
 ## What this release fixed, and how it was proven
 

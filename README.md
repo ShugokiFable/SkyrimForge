@@ -1,4 +1,4 @@
-# Skyrim Forge 5.0.0
+# Skyrim Forge 5.0.1
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
@@ -93,7 +93,7 @@ Use `docs/NEXUS-PUBLICATION.md`. Forge never treats credit as a substitute for p
 
 ## FOMOD engineering
 
-Forge 5.0.0 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
+Forge 5.0 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
 
 C# scripted FOMOD installers are deliberately unsupported because they permit arbitrary code execution. See `docs/FOMOD-ENGINEERING.md`.
 

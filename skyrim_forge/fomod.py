@@ -17,6 +17,20 @@ from .util import atomic_write_text, sha256_file
 
 PLAN_SCHEMA = "skyrim-forge-fomod-plan/1"
 SCHEMA_LOCATION = "http://qconsulting.ca/fo3/ModConfig5.0.xsd"
+# Real installers cite the schema by several equivalent spellings, and the fo3
+# document is itself an xs:redefine of the gemm one. All of these describe the
+# same ModuleConfig 5.0 structure.
+_ACCEPTED_SCHEMA_LOCATIONS = {
+    "http://qconsulting.ca/fo3/ModConfig5.0.xsd",
+    "https://qconsulting.ca/fo3/ModConfig5.0.xsd",
+    "http://qconsulting.ca/gemm/ModConfig5.0.xsd",
+    "https://qconsulting.ca/gemm/ModConfig5.0.xsd",
+    "ModConfig5.0.xsd",
+}
+# versionDependency elements added by game-specific redefinitions of the base
+# schema. They carry a single `version` attribute and are inert to structural
+# validation, so they are recorded as unverified rather than refused.
+GAME_VERSION_DEPENDENCIES = {"gameDependency", "fommDependency", "foseDependency", "nvseDependency", "skseDependency"}
 XSI = "http://www.w3.org/2001/XMLSchema-instance"
 ORDER_VALUES = {"Ascending", "Descending", "Explicit"}
 GROUP_TYPES = {"SelectExactlyOne", "SelectAtMostOne", "SelectAtLeastOne", "SelectAll", "SelectAny"}
@@ -552,7 +566,12 @@ def analyze_plan_files(plan: dict[str, Any], source_root: Path, *, strict_covera
     payload = _payload_files(source_root)
     unreferenced = sorted(payload - covered, key=str.casefold)
     if unreferenced:
-        message = f"FOMOD payload contains {len(unreferenced)} unreferenced file(s)"
+        # Name the files. A gate that reports only a count cannot be acted on,
+        # and this one is meant to be the last check before a mod ships.
+        shown = ", ".join(unreferenced[:10])
+        if len(unreferenced) > 10:
+            shown += f", and {len(unreferenced) - 10} more"
+        message = f"FOMOD payload contains {len(unreferenced)} unreferenced file(s): {shown}"
         (errors if strict_coverage else warnings).append(message)
     if missing:
         errors.append(f"FOMOD references {len(missing)} missing or invalid source path(s)")
@@ -757,7 +776,7 @@ def _parse_int_attr(value: str | None, label: str, errors: list[str]) -> int:
         return 0
 
 
-def _xml_dependency(element: ET.Element, errors: list[str], referenced_flags: set[str], label: str, depth: int = 0) -> dict[str, Any] | None:
+def _xml_dependency(element: ET.Element, errors: list[str], referenced_flags: set[str], label: str, depth: int = 0, warnings: list[str] | None = None) -> dict[str, Any] | None:
     if depth > 32:
         errors.append(f"{label} exceeds maximum dependency nesting depth")
         return None
@@ -770,7 +789,7 @@ def _xml_dependency(element: ET.Element, errors: list[str], referenced_flags: se
             operator = "And"
         children = []
         for index, child in enumerate(element):
-            parsed = _xml_dependency(child, errors, referenced_flags, f"{label}/{_tag(child)}[{index}]", depth + 1)
+            parsed = _xml_dependency(child, errors, referenced_flags, f"{label}/{_tag(child)}[{index}]", depth + 1, warnings)
             if parsed is not None:
                 children.append(parsed)
         if not children:
@@ -796,14 +815,21 @@ def _xml_dependency(element: ET.Element, errors: list[str], referenced_flags: se
         if name:
             referenced_flags.add(name)
         return {"flag": {"name": name, "value": value}}
-    if tag in {"gameDependency", "fommDependency"}:
+    if tag in GAME_VERSION_DEPENDENCIES:
+        # Game-specific redefinitions of ModConfig5.0 add their own
+        # versionDependency elements; the fo3 schema Forge names as canonical
+        # exists precisely to add foseDependency. Refusing them contradicted the
+        # schema this validator asks installers to declare.
         _check_xml_attributes(element, {"version"}, {"version"}, errors, label)
         version = element.attrib.get("version", "")
         try:
             _version_tuple(version)
         except ValidationError as exc:
             errors.append(str(exc))
-        return {"game_version" if tag == "gameDependency" else "fomm_version": version}
+        key = {"gameDependency": "game_version", "fommDependency": "fomm_version"}.get(tag, f"{tag[:-10]}_version")
+        if tag not in {"gameDependency", "fommDependency"} and warnings is not None:
+            warnings.append(f"{label} uses {tag}, a game-specific schema extension. Forge records it without verifying the runtime it names.")
+        return {key: version}
     errors.append(f"Unsupported dependency element at {label}: {tag}")
     return None
 
@@ -868,9 +894,19 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
         errors.append("ModuleConfig.xml root element must be config")
     if _tag(info_root) != "fomod":
         errors.append("info.xml root element must be fomod")
+    # `xsi:noNamespaceSchemaLocation` is an optional XML *hint*. Nothing in
+    # ModConfig5.0.xsd requires it and no mod manager reads it, so treating it
+    # as mandatory failed installers that Vortex and MO2 install without
+    # complaint - including every FOMOD that simply omits the attribute or
+    # spells the URL with https. It is reported, not enforced.
     schema_attribute = f"{{{XSI}}}noNamespaceSchemaLocation"
-    if config_root.attrib.get(schema_attribute) != SCHEMA_LOCATION:
-        errors.append(f"ModuleConfig.xml must use the canonical schema-location token {SCHEMA_LOCATION!r}")
+    declared_schema = config_root.attrib.get(schema_attribute)
+    if declared_schema is None:
+        warnings.append("ModuleConfig.xml declares no xsi:noNamespaceSchemaLocation; the canonical token is "
+                        f"{SCHEMA_LOCATION!r}. Managers do not require it.")
+    elif declared_schema.strip().rstrip("/") not in _ACCEPTED_SCHEMA_LOCATIONS:
+        warnings.append(f"ModuleConfig.xml declares an unrecognized schema location {declared_schema!r}; "
+                        f"the canonical token is {SCHEMA_LOCATION!r}. Structure is validated regardless.")
     unknown_root_attributes = set(config_root.attrib) - {schema_attribute}
     if unknown_root_attributes:
         errors.append(f"config has unsupported attributes: {sorted(unknown_root_attributes)}")
@@ -996,7 +1032,7 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
             normalized["module"]["image_height"] = _parse_int_attr(child.attrib.get("height"), "moduleImage.height", errors) if "height" in child.attrib else -1
         elif tag == "moduleDependencies":
             _check_xml_attributes(child, {"operator"}, set(), errors, "moduleDependencies")
-            normalized["module_dependencies"] = _xml_dependency(child, errors, referenced_flags, "moduleDependencies")
+            normalized["module_dependencies"] = _xml_dependency(child, errors, referenced_flags, "moduleDependencies", warnings=warnings)
         elif tag == "requiredInstallFiles":
             _check_xml_attributes(child, set(), set(), errors, "requiredInstallFiles")
             normalized["required_files"] = _xml_mappings(child, errors, "required")
@@ -1023,7 +1059,7 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
                     errors.append(f"installStep {step_name} child order must be optional visible followed by optionalFileGroups")
                 if step_children and _tag(step_children[0]) == "visible":
                     _check_xml_attributes(step_children[0], {"operator"}, set(), errors, f"installStep {step_name}.visible")
-                    step["visible"] = _xml_dependency(step_children[0], errors, referenced_flags, f"step:{step_name}.visible")
+                    step["visible"] = _xml_dependency(step_children[0], errors, referenced_flags, f"step:{step_name}.visible", warnings=warnings)
                 groups_nodes = [node for node in step_children if _tag(node) == "optionalFileGroups"]
                 if len(groups_nodes) != 1:
                     errors.append(f"installStep {step_name} must contain exactly one optionalFileGroups")
@@ -1067,7 +1103,15 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
                         plugin_tags = [_tag(node) for node in plugin_element]
                         if not plugin_tags or plugin_tags[0] != "description" or plugin_tags[-1] != "typeDescriptor":
                             errors.append(f"plugin {step_name}/{group_name}/{plugin_name} must begin with description and end with typeDescriptor")
+                        # ModConfig5.0.xsd plugin sequence is:
+                        #   description, image?, (files, conditionFlags?
+                        #                         | conditionFlags, files?), typeDescriptor
+                        # The optional image sits between description and the
+                        # choice. Omitting it here rejected every option that
+                        # carries a screenshot, which is most real installers.
                         middle = plugin_tags[1:-1]
+                        if middle[:1] == ["image"]:
+                            middle = middle[1:]
                         valid_middle = middle in (["files"], ["conditionFlags"], ["files", "conditionFlags"], ["conditionFlags", "files"])
                         if not valid_middle:
                             errors.append(f"plugin {step_name}/{group_name}/{plugin_name} must contain files or conditionFlags in ModuleConfig 5.0 order")
@@ -1152,7 +1196,7 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
                                         type_name = types[0].attrib.get("name", "")
                                         if type_name not in PLUGIN_TYPES:
                                             errors.append(f"plugin {plugin_name} pattern[{pattern_index}] has invalid type {type_name!r}")
-                                        patterns.append({"dependencies": _xml_dependency(deps[0], errors, referenced_flags, f"plugin:{plugin_name}.pattern[{pattern_index}]"), "type": type_name})
+                                        patterns.append({"dependencies": _xml_dependency(deps[0], errors, referenced_flags, f"plugin:{plugin_name}.pattern[{pattern_index}]", warnings=warnings), "type": type_name})
                                 plugin["type"] = {"default": defaults[0].attrib.get("name", "") if defaults else "", "patterns": patterns}
                             else:
                                 errors.append(f"plugin {plugin_name} has unsupported typeDescriptor child {_tag(descriptor_children[0])}")
@@ -1191,7 +1235,7 @@ def validate_fomod(root: Path, *, strict_coverage: bool = True) -> dict[str, Any
                 mapped_files = _xml_mappings(files[0], errors, f"conditional:{ci}")
                 if not mapped_files:
                     errors.append(f"conditional pattern[{ci}] files must not be empty")
-                normalized["conditional_files"].append({"dependencies": _xml_dependency(deps[0], errors, referenced_flags, f"conditional[{ci}]"), "files": mapped_files})
+                normalized["conditional_files"].append({"dependencies": _xml_dependency(deps[0], errors, referenced_flags, f"conditional[{ci}]", warnings=warnings), "files": mapped_files})
                 counts["conditional_patterns"] += 1
     if not normalized["module_dependencies"] and not normalized["required_files"] and not normalized["steps"] and not normalized["conditional_files"]:
         errors.append("FOMOD has no dependencies, required files, install steps, or conditional files and would have no installation effect")

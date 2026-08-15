@@ -1,5 +1,38 @@
 # Changelog
 
+## 5.0.1
+
+FOMOD false positives. Forge is meant to be the last gate a mod passes before it
+ships, which makes a wrong rejection more expensive than a missed nicety: it
+teaches the author to stop trusting the gate. Each of these refused an installer
+that is legal per the official `ModConfig5.0.xsd` and that Vortex and MO2 install
+without complaint.
+
+- Fixed a plugin containing the optional `<image>` element being rejected with
+  "must contain files or conditionFlags in ModuleConfig 5.0 order". The schema
+  sequence is `description, image?, (files, conditionFlags? | conditionFlags,
+  files?), typeDescriptor`; the optional image was not allowed for, so **every
+  option carrying a screenshot was refused** — which is most real installers.
+- Fixed `xsi:noNamespaceSchemaLocation` being enforced as mandatory. It is an
+  optional XML hint, nothing in the schema requires it, and no mod manager reads
+  it. Omitting it, or spelling the URL with `https`, failed the whole installer.
+  It is now reported as a warning and the structure is validated regardless.
+  `http`/`https` for both the `fo3` and `gemm` documents, and a bare
+  `ModConfig5.0.xsd`, are all accepted without comment.
+- Fixed game-specific version dependencies being refused as unsupported
+  elements. The `fo3` schema that Forge itself names as canonical exists
+  precisely to add `foseDependency`, so the validator demanded a schema and then
+  rejected what that schema defines. `foseDependency`, `nvseDependency`, and
+  `skseDependency` are now recorded as unverified, consistent with how Forge
+  already treats version-specific framework syntax.
+- Made the unreferenced-payload error name the files it rejects instead of
+  reporting only a count. Coverage remains strict; the message became usable.
+- Added `ThirdPartyFomodFalsePositiveTests`, which builds installers that are
+  legal per the published XSD and requires Forge to accept them.
+
+The C# scripted-installer refusal is unchanged and deliberate: those permit
+arbitrary code execution.
+
 ## 5.0.0
 
 Protocol release. Forge now speaks the current MCP revision without giving up
