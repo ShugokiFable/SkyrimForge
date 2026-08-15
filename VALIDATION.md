@@ -19,7 +19,7 @@
   - The `initialize` handshake still negotiates `2025-11-25`.
   - A legacy result carries none of `resultType`, `ttlMs`, `cacheScope`.
   - Both eras return an identical 52-tool inventory.
-- Version source gate: PASS. Seven restatements agree with
+- Version source gate: PASS. Eight restatements agree with
   `skyrim_forge/version.py`, and neither the workflow nor the archive builder
   hardcodes a version.
 - Distributed integrity: PASS. All 214 manifest entries verify against the tree

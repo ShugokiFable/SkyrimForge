@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.0.2
+
+- Fixed the installed AI skill advertising "Skyrim Forge 4.2" from inside a 5.0
+  installation. That line is the skill's `description`, which is the only thing
+  an agent reads when deciding whether to load Forge at all, and it was wrong in
+  every provider home the bridge installs to.
+- Extended the version gate to cover the skill descriptor. It checks the series
+  (`major.minor`) rather than the patch, because that is what the skill states.
+  Eight restatements of the version are now gated against `version.py`.
+
 ## 5.0.1
 
 FOMOD false positives. Forge is meant to be the last gate a mod passes before it

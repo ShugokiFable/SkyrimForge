@@ -1,3 +1,9 @@
+Skyrim Forge 5.0.2
+
+- The installed AI skill said "Skyrim Forge 4.2" inside a 5.0 install. That line
+  is what an AI reads when deciding whether to use Forge, and it was wrong in
+  every provider home. Fixed, and now checked before release.
+
 Skyrim Forge 5.0.1
 
 FOMOD validation false positives are fixed. Forge is meant to be the last check a

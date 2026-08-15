@@ -412,6 +412,20 @@ def validate_version_sources(errors: list[str]) -> dict[str, Any]:
     # The first line a user sees on Windows, and the first to look abandoned.
     capture("START-HERE.bat", r"^title Skyrim Forge ([0-9]+\.[0-9]+\.[0-9]+)")
     capture("README.md", r"^# Skyrim Forge ([0-9]+\.[0-9]+\.[0-9]+)")
+
+    # The installed AI skill states the series, not the patch. Its `description`
+    # is the only line an agent reads when deciding whether to load Forge at
+    # all, and it was still advertising 4.2 from inside a 5.0 install on every
+    # provider home.
+    series = ".".join(VERSION.split(".")[:2])
+    skill = ROOT / "integrations" / "skyrim-forge" / "SKILL.md"
+    skill_versions = re.findall(r"Skyrim Forge ([0-9]+\.[0-9]+)", skill.read_text(encoding="utf-8")) if skill.exists() else []
+    if not skill_versions:
+        errors.append("no version declaration found in integrations/skyrim-forge/SKILL.md")
+    stale_skill = sorted({v for v in skill_versions if v != series})
+    if stale_skill:
+        errors.append(f"integrations/skyrim-forge/SKILL.md advertises {stale_skill} but the product series is {series}")
+    sources["integrations/skyrim-forge/SKILL.md (series)"] = series if skill_versions and not stale_skill else (stale_skill[0] if stale_skill else None)
     # The workflow must derive the expected native string rather than hardcode
     # it; a literal here is exactly what went stale before.
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
@@ -424,7 +438,8 @@ def validate_version_sources(errors: list[str]) -> dict[str, Any]:
     if literal:
         errors.append("scripts/build_release_archive.py hardcodes VERSION instead of deriving it")
     hardcoded = hardcoded + literal
-    mismatched = sorted(rel for rel, value in sources.items() if value != VERSION)
+    # Entries marked "(series)" declare major.minor only and are checked above.
+    mismatched = sorted(rel for rel, value in sources.items() if not rel.endswith("(series)") and value != VERSION)
     if mismatched:
         errors.append(f"version drift against skyrim_forge/version.py in {mismatched}")
     return {"result": "PASS" if not mismatched and not hardcoded else "FAIL", "version": VERSION, "sources": sources, "hardcoded_in_ci": sorted(set(hardcoded))}
