@@ -2,7 +2,7 @@
 
 ## Current results
 
-- Source regression suite: PASS, 134 tests (1 skipped).
+- Source regression suite: PASS, 135 tests (1 skipped).
 - Full repository validator, `--scope full`: PASS with zero errors.
 - PowerShell parser gate: PASS for all Forge-owned scripts.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.

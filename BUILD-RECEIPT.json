@@ -21,11 +21,11 @@
             "<HOME>\\sdk\\go1.23.2\\bin\\go.exe",
             "version",
             "-m",
-            "<HOME>\\AppData\\Local\\Temp\\tmpztm1l26i\\linux-a"
+            "<HOME>\\AppData\\Local\\Temp\\tmp0455mkm3\\linux-a"
           ],
           "returncode": 0,
           "stderr": "",
-          "stdout": "<HOME>\\AppData\\Local\\Temp\\tmpztm1l26i\\linux-a: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n"
+          "stdout": "<HOME>\\AppData\\Local\\Temp\\tmp0455mkm3\\linux-a: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n"
         },
         "result": "PASS",
         "second": "0d64e3873589d0293228b53834919bd178e2269413bfd5e7722ca4b468a960e5"
@@ -50,11 +50,11 @@
             "<HOME>\\sdk\\go1.23.2\\bin\\go.exe",
             "version",
             "-m",
-            "<HOME>\\AppData\\Local\\Temp\\tmpztm1l26i\\windows-a.exe"
+            "<HOME>\\AppData\\Local\\Temp\\tmp0455mkm3\\windows-a.exe"
           ],
           "returncode": 0,
           "stderr": "",
-          "stdout": "<HOME>\\AppData\\Local\\Temp\\tmpztm1l26i\\windows-a.exe: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n"
+          "stdout": "<HOME>\\AppData\\Local\\Temp\\tmp0455mkm3\\windows-a.exe: go1.23.2\n\tpath\tskyrimforge/native\n\tmod\tskyrimforge/native\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n"
         },
         "result": "PASS",
         "second": "deb55be93df2ca65e99727bfb103bc14cf17cfb49eb48f48f5ea885895e054a4"

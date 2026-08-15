@@ -22,7 +22,7 @@
 - Version sources: one source of truth in `skyrim_forge/version.py`; seven
   restatements are gated against it and CI derives the native version string
   instead of hardcoding it
-- Repository validation: PASS, 134 tests
+- Repository validation: PASS, 135 tests
 - Native helpers: rebuilt with pinned Go 1.23.2; two-build reproducibility PASS
   for Windows x64 and Linux x64; packaged and published copies hash-equal
 - Remaining runtime boundary: Skyrim gameplay and third-party GUI behavior are
