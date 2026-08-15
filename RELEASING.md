@@ -2,7 +2,11 @@
 
 0. Rebuild native helpers with `python scripts/rebuild_native_helpers.py`. This uses the exact deterministic profile: Go 1.23.2, `-trimpath`, `-buildvcs=false`, stripped symbols, and an empty build ID.
 
-1. Run the complete repository validator with `--write-reports`.
+1. Run the complete repository validator with `--write-reports` **twice**. The
+   report files hash the tree they ship with, so any source change makes the
+   committed manifest stale by definition: the first pass rewrites the evidence
+   and may fail on that staleness, and the second pass is the gate that must
+   return PASS. A third run without `--write-reports` confirms idempotence.
 2. Run all required GitHub CI and CodeQL jobs.
 3. Execute the Windows installer twice in CI.
 4. Execute the bundled Windows native helper and its self-test.

@@ -1,6 +1,12 @@
-# Skyrim Forge 4.2.5
+# Skyrim Forge 5.0.0
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
+
+Forge 5.0 speaks the current **MCP `2026-07-28`** revision, which replaced the
+`initialize` handshake with per-request metadata, while still serving the
+handshake era every installed AI client uses today. Both eras run from the same
+process and expose the same 52 tools, so existing Codex, Claude, and Grok
+registrations need no change. See [docs/MCP.md](docs/MCP.md).
 
 Forge 4.2 includes the **Automation Fabric** plus a mandatory rights-and-publication gate for shareable releases. An AI does not click around SSEEdit, Creation Kit, Wrye Bash, LOOT, or Mod Organizer 2. It submits a typed JSON job. Forge validates the job, snapshots inputs, runs only the configured adapter, captures logs and outputs, reopens what it can verify, and writes an audit receipt.
 
@@ -87,7 +93,7 @@ Use `docs/NEXUS-PUBLICATION.md`. Forge never treats credit as a substitute for p
 
 ## FOMOD engineering
 
-Forge 4.2.5 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
+Forge 5.0.0 includes a typed FOMOD generator rather than only detecting an existing installer. It covers the bounded standard ModuleConfig XML surface: install steps, all standard group types, informational and file-bearing options, images and descriptions, required and conditional files, condition flags, nested dependencies, dynamic option types, priorities, module metadata, UTF-8/UTF-16 output, and branch simulation. Strict validation rejects omitted payload files, unsafe source paths, temporal or undefined flag references, malformed XML order, invalid condition blocks, and unresolved destination collisions.
 
 C# scripted FOMOD installers are deliberately unsupported because they permit arbitrary code execution. See `docs/FOMOD-ENGINEERING.md`.
 

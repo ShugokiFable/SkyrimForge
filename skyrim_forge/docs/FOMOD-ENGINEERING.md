@@ -1,6 +1,6 @@
 # FOMOD engineering
 
-Forge 4.2.5 treats FOMOD installers as typed build artifacts, not hand-written XML fragments.
+Forge 5.0.0 treats FOMOD installers as typed build artifacts, not hand-written XML fragments.
 
 ## Supported ModuleConfig 5.0 surface
 

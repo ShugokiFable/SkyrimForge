@@ -1,11 +1,33 @@
 # Decisions
 
-- Preserve 4.2.4 and install 4.2.5 beside it.
-- Bootstrap only after the user selects installation or passes `-BootstrapPython`.
-- Download only a pinned official Python installer, then verify SHA-256 and Authenticode before execution.
-- Use one shared Forge `.venv` for all AI clients.
-- Install a machine-readable `INSTALLATION.json` beside each provider skill so no provider needs a guessed path or `PYTHONPATH`.
-- Register MCP only through a locally verified provider command surface. Kimi and Hermes remain full CLI/skill consumers when their installed clients do not expose MCP registration.
-- Preserve PowerShell 5 compatibility for Grok registration by using an explicit process argument vector.
-- Treat the configured tools root as read-only and import only unambiguous non-GUI adapters into the private tool vault.
-- Pin configured third-party tools by exact executable hash; never launch a GUI merely to prove configuration.
+- Be a dual-era MCP server rather than migrating. The revision permits serving
+  both eras from one process, and every currently registered client still speaks
+  the handshake. Dropping it would break working installations to gain nothing.
+- Decide the era from what the client sends, not from configuration. A request
+  declaring the modern version in `_meta` is answered under that revision; an
+  `initialize` request selects legacy semantics.
+- Never add modern-only fields to a legacy response. `resultType`, `ttlMs` and
+  `cacheScope` appear only when the client asked for the modern revision.
+- Refuse an unknown protocol version with `UnsupportedProtocolVersionError` and
+  the supported list rather than silently downgrading it, so a client can
+  correct itself instead of guessing.
+- Answer `server/discover` even when the request carries no `_meta`. It is the
+  documented stdio probe and a probing client has not yet learned what the
+  server speaks.
+- Treat sanitized local configuration as private and never-fresh for caching
+  purposes. It reflects machine state and `forge_config_set` can change it.
+  Static tool, prompt and resource inventories are public and cacheable.
+- Keep exactly one version source, `skyrim_forge/version.py`. Restating it in a
+  Go constant, packaging metadata, plain-text pointers and a batch title is
+  unavoidable; drifting silently is not, so every copy is gated against it and
+  the workflow derives the native string instead of restating it.
+- Record integrity evidence for the bytes the consumer actually receives. A
+  manifest generated from a differently normalised tree is worse than no
+  manifest, because it fails for the honest verifier and no one else.
+- Preserve 4.2.5 as the rollback release and publish 5.0.0 beside it.
+- Group `codeql-action/init` and `codeql-action/analyze` in Dependabot. They must
+  run the same release, and ungrouped updates split the pair across pull
+  requests and break every scan.
+- Preserve every 4.x safety boundary unchanged: no GUI launching, no arbitrary
+  shell commands, no writes to live Skyrim `Data`, external processes disabled
+  by default, and third-party tools hash-pinned rather than bundled.

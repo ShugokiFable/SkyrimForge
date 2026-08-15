@@ -1,12 +1,29 @@
-Skyrim Forge 4.2.5
+Skyrim Forge 5.0.0
 
-- Fresh Windows installs can create the missing shared .venv through an explicit,
-  verified Python bootstrap.
-- All supported AI providers receive an exact INSTALLATION.json descriptor.
-- Codex and Grok use the shared runtime through verified MCP registrations.
-- Kimi and Hermes use the same runtime through installed skill and CLI descriptors.
-- The installer preserves user configuration and repairs only Forge-owned runtime paths.
-- Runtime-created virtual environments, reports, caches, and installation descriptors
-  are excluded from public release archives.
-- Supported local tool adapters are resolved by exact executable and SHA-256 pin.
-- Windows and Linux native helpers were rebuilt reproducibly as version 4.2.5.
+- Forge speaks the current MCP revision, 2026-07-28, which replaced the
+  initialize handshake with per-request metadata.
+- Forge serves both eras at once. Existing Codex, Claude, and Grok registrations
+  keep working exactly as before and need no change.
+- server/discover reports the supported versions, capabilities, and server
+  identity in a single request.
+- An unsupported protocol version is refused with the list of versions Forge
+  does support, instead of being silently downgraded.
+- The shipped MANIFEST.json now verifies against a git clone. Five installer and
+  startup scripts previously failed that check because of line-ending rules.
+- Files declared as CRLF are now required to be CRLF, and every manifest entry is
+  re-hashed by the regression suite.
+- CodeQL scans pass again. The init and analyze actions were running mismatched
+  releases, which blocked four dependency updates.
+- The product version now has one source of truth, and every other copy of it is
+  checked against that source before release.
+- actions/checkout 7.0.1, actions/setup-python 7.0.0, and codeql-action 4.37.6.
+- Windows and Linux native helpers were rebuilt reproducibly as version 5.0.0
+  with pinned Go 1.23.2.
+
+Safety boundaries are unchanged. Forge still never launches a GUI, never runs
+arbitrary shell commands, never writes to live Skyrim Data, keeps external
+process execution disabled by default, and hash-pins third-party tools instead
+of bundling them.
+
+Skyrim gameplay, save behavior, and third-party GUI results remain untested
+runtime gates.

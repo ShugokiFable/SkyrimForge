@@ -18,7 +18,25 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "4.2.5"
+
+
+def _single_source_version() -> str:
+    """Read the product version from its one source of truth.
+
+    This used to be a literal here, a second literal in the CI workflow, and a
+    third in the Go helper. That is how the Windows CI native assertion was
+    still demanding 4.2.3 while the product shipped 4.2.4. Every other copy is
+    now checked against this one by `validate_version_sources`.
+    """
+    text = (ROOT / "skyrim_forge" / "version.py").read_text(encoding="utf-8")
+    match = re.search(r'^VERSION\s*=\s*"([^"]+)"', text, re.M)
+    if not match:
+        raise SystemExit("skyrim_forge/version.py does not declare VERSION")
+    return match.group(1)
+
+
+VERSION = _single_source_version()
+MODERN_PROTOCOL = "2026-07-28"
 EXCLUDED = {".git", ".venv", "venv", ".go-cache", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov", "REPORTS", "INSTALLATION.json"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
@@ -247,11 +265,17 @@ def validate_packaging(errors: list[str]) -> dict[str, Any]:
 
 
 def validate_mcp(errors: list[str]) -> dict[str, Any]:
+    modern_meta = {"_meta": {"io.modelcontextprotocol/protocolVersion": MODERN_PROTOCOL}}
     requests = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-11-25"}},
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
         {"jsonrpc": "2.0", "id": 3, "method": "resources/list", "params": {}},
         {"jsonrpc": "2.0", "id": 4, "method": "prompts/list", "params": {}},
+        # Both eras are gated here: a legacy handshake above, and below the
+        # modern discovery probe, a modern list, and a rejected version.
+        {"jsonrpc": "2.0", "id": 5, "method": "server/discover", "params": dict(modern_meta)},
+        {"jsonrpc": "2.0", "id": 6, "method": "tools/list", "params": dict(modern_meta)},
+        {"jsonrpc": "2.0", "id": 7, "method": "tools/list", "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "1900-01-01"}}},
     ]
     completed = subprocess.run(
         [sys.executable, "-m", "skyrim_forge", "mcp"], cwd=ROOT,
@@ -271,15 +295,32 @@ def validate_mcp(errors: list[str]) -> dict[str, Any]:
             "forge://docs/toolchain-broker", "forge://references/tool-catalog",
         }
         required_prompts = {"verify_mod_release", "build_fomod_installer", "prepare_nexus_release", "build_native_plugin", "build_framework_config", "configure_verified_toolchain"}
+        discover = responses[4]["result"]
+        modern_tools = responses[5]["result"]
+        refused = responses[6]["error"]
+        modern = (
+            MODERN_PROTOCOL in discover["supportedVersions"]
+            and discover["resultType"] == "complete"
+            and discover["_meta"]["io.modelcontextprotocol/serverInfo"]["version"] == VERSION
+            # Caching hints are mandatory on complete results for these methods.
+            and modern_tools["resultType"] == "complete" and modern_tools["ttlMs"] >= 0
+            and modern_tools["cacheScope"] in {"public", "private"}
+            and len(modern_tools["tools"]) == tool_count
+            # An unknown version must be refused, not silently downgraded.
+            and refused["code"] == -32022 and MODERN_PROTOCOL in refused["data"]["supported"]
+            # A legacy result must not carry modern-only fields.
+            and not {"resultType", "ttlMs", "cacheScope"} & set(responses[1]["result"])
+        )
         passed = (
             completed.returncode == 0 and responses[0]["result"]["protocolVersion"] == "2025-11-25"
             and tool_count >= 50 and required_resources.issubset(resource_uris) and required_prompts.issubset(prompt_names)
+            and modern
         )
     except Exception:
-        tool_count = 0; resource_uris = set(); prompt_names = set(); passed = False
+        tool_count = 0; resource_uris = set(); prompt_names = set(); passed = False; modern = False
     if not passed:
         errors.append("MCP handshake/inventory failed")
-    return {"result": "PASS" if passed else "FAIL", "tools": tool_count, "resources": sorted(resource_uris), "prompts": sorted(prompt_names), "stderr": completed.stderr}
+    return {"result": "PASS" if passed else "FAIL", "protocols": [MODERN_PROTOCOL, "2025-11-25", "2025-06-18", "2024-11-05"], "dual_era": bool(modern), "tools": tool_count, "resources": sorted(resource_uris), "prompts": sorted(prompt_names), "stderr": completed.stderr}
 
 
 def _powershell_expandable_strings(text: str) -> list[tuple[int, str]]:
@@ -343,9 +384,55 @@ def write_reports(report: dict[str, Any]) -> None:
     (ROOT/"SBOM.spdx.json").write_text(json.dumps(sbom,indent=2,sort_keys=True)+"\n",encoding="utf-8")
 
 
+def validate_version_sources(errors: list[str]) -> dict[str, Any]:
+    """Require every declared copy of the version to match version.py.
+
+    The 4.2.4 release shipped with Windows CI still asserting 4.2.3 because the
+    version is restated in files that cannot import each other: a Go constant, a
+    workflow literal, packaging metadata, and plain-text pointers. Restating is
+    unavoidable; drifting silently is not.
+    """
+    sources: dict[str, str | None] = {"skyrim_forge/version.py": VERSION}
+
+    def capture(rel: str, pattern: str) -> None:
+        path = ROOT / rel
+        if not path.exists():
+            sources[rel] = None
+            errors.append(f"missing version source {rel}")
+            return
+        found = re.search(pattern, path.read_text(encoding="utf-8"), re.M)
+        sources[rel] = found.group(1) if found else None
+        if sources[rel] is None:
+            errors.append(f"no version declaration found in {rel}")
+
+    capture("writer/native-go/main.go", r'^const version = "([^"]+)"')
+    capture("pyproject.toml", r'^version\s*=\s*"([^"]+)"')
+    capture("CURRENT.txt", r"^\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$")
+    capture("VERSION.txt", r"^Skyrim Forge ([0-9]+\.[0-9]+\.[0-9]+)")
+    # The first line a user sees on Windows, and the first to look abandoned.
+    capture("START-HERE.bat", r"^title Skyrim Forge ([0-9]+\.[0-9]+\.[0-9]+)")
+    capture("README.md", r"^# Skyrim Forge ([0-9]+\.[0-9]+\.[0-9]+)")
+    # The workflow must derive the expected native string rather than hardcode
+    # it; a literal here is exactly what went stale before.
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    hardcoded = re.findall(r"SkyrimForge\.Native [0-9]+\.[0-9]+\.[0-9]+ go", workflow)
+    if hardcoded:
+        errors.append(f"ci.yml hardcodes a native version string: {sorted(set(hardcoded))}")
+    # The archive builder names the release directory and must not restate it.
+    archive_builder = (ROOT / "scripts" / "build_release_archive.py").read_text(encoding="utf-8")
+    literal = re.findall(r'^VERSION\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"', archive_builder, re.M)
+    if literal:
+        errors.append("scripts/build_release_archive.py hardcodes VERSION instead of deriving it")
+    hardcoded = hardcoded + literal
+    mismatched = sorted(rel for rel, value in sources.items() if value != VERSION)
+    if mismatched:
+        errors.append(f"version drift against skyrim_forge/version.py in {mismatched}")
+    return {"result": "PASS" if not mismatched and not hardcoded else "FAIL", "version": VERSION, "sources": sources, "hardcoded_in_ci": sorted(set(hardcoded))}
+
+
 VALIDATION_SCOPES = {
-    "python": ("files", "powershell", "python", "packaging", "mcp"),
-    "full": ("files", "powershell", "python", "native", "go", "packaging", "mcp"),
+    "python": ("files", "powershell", "python", "packaging", "mcp", "version"),
+    "full": ("files", "powershell", "python", "native", "go", "packaging", "mcp", "version"),
 }
 
 
@@ -366,6 +453,7 @@ def validate(scope: str = "full") -> dict[str, Any]:
     if "go" in selected: checks["go"]=validate_go(errors,warnings)
     if "packaging" in selected: checks["packaging"]=validate_packaging(errors)
     if "mcp" in selected: checks["mcp"]=validate_mcp(errors)
+    if "version" in selected: checks["version"]=validate_version_sources(errors)
     return {"product":"Skyrim Forge","version":VERSION,"scope":scope,"result":"PASS" if not errors else "FAIL","errors":sorted(set(errors)),"warnings":sorted(set(warnings)),"checks":checks}
 
 

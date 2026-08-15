@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import argparse, hashlib, os, stat, zipfile
+import argparse, hashlib, os, re, stat, zipfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="4.2.5"
+# Derived, never restated: the archive prefix must follow the product version.
+VERSION=re.search(r'^VERSION\s*=\s*"([^"]+)"',(ROOT/"skyrim_forge"/"version.py").read_text(encoding="utf-8"),re.M).group(1)
 FIXED=(2026,7,26,0,0,0)
 EXCLUDED={".git",".venv","venv",".go-cache","__pycache__","dist","build",".pytest_cache","REPORTS","INSTALLATION.json"}
 

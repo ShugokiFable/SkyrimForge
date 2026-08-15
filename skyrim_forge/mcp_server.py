@@ -10,7 +10,30 @@ from .service import ForgeService
 from .strictjson import loads
 from .version import VERSION
 
-PROTOCOLS = {"2025-11-25", "2025-06-18", "2024-11-05"}
+MODERN_PROTOCOL = "2026-07-28"
+LEGACY_PROTOCOLS = ("2025-11-25", "2025-06-18", "2024-11-05")
+PROTOCOLS = {MODERN_PROTOCOL, *LEGACY_PROTOCOLS}
+SUPPORTED_VERSIONS = [MODERN_PROTOCOL, *LEGACY_PROTOCOLS]
+
+# 2026-07-28 carries version, identity and capabilities as per-request metadata
+# instead of an `initialize` handshake. Forge is a dual-era server: a request
+# that declares the modern version in `_meta` is answered statelessly under that
+# revision, and an `initialize` request still selects legacy semantics so the
+# already-registered Codex, Claude and Grok clients keep working unchanged.
+META_PROTOCOL_VERSION = "io.modelcontextprotocol/protocolVersion"
+META_SERVER_INFO = "io.modelcontextprotocol/serverInfo"
+UNSUPPORTED_PROTOCOL_VERSION = -32022
+
+SERVER_INFO = {"name": "skyrim-forge", "version": VERSION}
+INSTRUCTIONS = "Use typed Forge jobs. Never send arbitrary shell commands or write to live Skyrim Data."
+CAPABILITIES = {"tools": {"listChanged": False}, "resources": {"subscribe": False, "listChanged": False}, "prompts": {"listChanged": False}}
+
+# Forge's tool, prompt and resource inventories are fixed for the lifetime of an
+# installed version, so they are safe to cache and identical for every caller.
+STATIC_TTL_MS = 3600000
+# Sanitized configuration reflects local machine state and can be changed by
+# forge_config_set, so it is never shared between callers and never held fresh.
+CONFIG_URIS = {"forge://config"}
 
 
 def _schema(properties: dict[str, Any] | None = None, required: list[str] | None = None) -> dict[str, Any]:
@@ -150,6 +173,20 @@ def _resource_root() -> Path:
     return Path(__file__).resolve().parent
 
 
+def _declared_version(request: dict[str, Any]) -> str | None:
+    """Return the protocol version a modern request declares in `_meta`."""
+    params = request.get("params")
+    meta = params.get("_meta") if isinstance(params, dict) else None
+    version = meta.get(META_PROTOCOL_VERSION) if isinstance(meta, dict) else None
+    return version if isinstance(version, str) else None
+
+
+def _cacheable(result: dict[str, Any], uri: str | None = None) -> dict[str, Any]:
+    """Attach the caching hints the revision requires on a complete result."""
+    private = uri in CONFIG_URIS
+    return {**result, "resultType": "complete", "ttlMs": 0 if private else STATIC_TTL_MS, "cacheScope": "private" if private else "public"}
+
+
 def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | None:
     if request.get("jsonrpc") != "2.0":
         raise ValueError("JSON-RPC 2.0 required")
@@ -157,14 +194,23 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
     request_id = request.get("id")
     if method in {"notifications/initialized", "notifications/cancelled"}:
         return None
-    if method == "initialize":
+    declared = _declared_version(request)
+    if declared is not None and declared not in PROTOCOLS:
+        return {"jsonrpc": "2.0", "id": request_id, "error": {"code": UNSUPPORTED_PROTOCOL_VERSION, "message": "Unsupported protocol version", "data": {"supported": SUPPORTED_VERSIONS, "requested": declared}}}
+    # Only the modern revision carries `resultType` and caching hints. A legacy
+    # client must keep receiving exactly the shape its revision defines.
+    modern = declared == MODERN_PROTOCOL or method == "server/discover"
+    cache = _cacheable if modern else (lambda result, uri=None: result)
+    if method == "server/discover":
+        result = cache({"supportedVersions": SUPPORTED_VERSIONS, "capabilities": CAPABILITIES, "instructions": INSTRUCTIONS, "_meta": {META_SERVER_INFO: SERVER_INFO}})
+    elif method == "initialize":
         requested = request.get("params", {}).get("protocolVersion", "2025-11-25")
         protocol = requested if requested in PROTOCOLS else "2025-11-25"
-        result = {"protocolVersion": protocol, "capabilities": {"tools": {"listChanged": False}, "resources": {"subscribe": False, "listChanged": False}, "prompts": {"listChanged": False}}, "serverInfo": {"name": "skyrim-forge", "version": VERSION}, "instructions": "Use typed Forge jobs. Never send arbitrary shell commands or write to live Skyrim Data."}
+        result = {"protocolVersion": protocol, "capabilities": CAPABILITIES, "serverInfo": SERVER_INFO, "instructions": INSTRUCTIONS}
     elif method == "ping":
         result = {}
     elif method == "tools/list":
-        result = {"tools": [{"name": name, **spec} for name, spec in sorted(TOOL_SPECS.items())]}
+        result = cache({"tools": [{"name": name, **spec} for name, spec in sorted(TOOL_SPECS.items())]})
     elif method == "tools/call":
         params = request.get("params", {})
         name = params.get("name")
@@ -176,7 +222,7 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
         except Exception as exc:
             result = _error(exc)
     elif method == "resources/list":
-        result = {"resources": [
+        result = cache({"resources": [
             {"uri": "forge://docs/automation-fabric", "name": "Automation Fabric", "mimeType": "text/markdown"},
             {"uri": "forge://docs/toolchain-broker", "name": "Verified Toolchain Broker", "mimeType": "text/markdown"},
             {"uri": "forge://references/tool-catalog", "name": "Tool Catalog", "mimeType": "application/json"},
@@ -196,7 +242,7 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
             {"uri": "forge://references/framework-source-lock", "name": "Framework Source Lock", "mimeType": "application/json"},
             {"uri": "forge://references/native-source-lock", "name": "Native Source Lock", "mimeType": "application/json"},
             {"uri": "forge://config", "name": "Forge Configuration", "mimeType": "application/json"},
-        ]}
+        ]})
     elif method == "resources/read":
         uri = request.get("params", {}).get("uri")
         if uri == "forge://docs/toolchain-broker":
@@ -258,9 +304,9 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
             mime = "application/json"
         else:
             raise ValueError(f"Unknown resource URI: {uri}")
-        result = {"contents": [{"uri": uri, "mimeType": mime, "text": text}]}
+        result = cache({"contents": [{"uri": uri, "mimeType": mime, "text": text}]}, uri)
     elif method == "prompts/list":
-        result = {"prompts": [
+        result = cache({"prompts": [
             {"name": "configure_verified_toolchain", "description": "Discover, import, hash-pin and resolve real installed Skyrim tools without bundling them publicly.", "arguments": [{"name": "source", "required": True}, {"name": "capability", "required": True}]},
             {"name": "verify_mod_release", "description": "Plan a Forge verification pipeline for a mod release.", "arguments": [{"name": "release_root", "required": True}]},
             {"name": "build_compatibility_patch", "description": "Plan a typed compatibility patch without GUI handoff.", "arguments": [{"name": "mod_a", "required": True}, {"name": "mod_b", "required": True}]},
@@ -268,7 +314,7 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
             {"name": "prepare_nexus_release", "description": "Prepare a rights-mapped Nexus Mods publication bundle and block unsupported sharing claims.", "arguments": [{"name": "release_root", "required": True}, {"name": "mod_name", "required": True}, {"name": "version", "required": True}, {"name": "uploader", "required": True}]},
             {"name": "build_native_plugin", "description": "Plan a source-locked CommonLibSSE-NG DLL project and verification pipeline.", "arguments": [{"name": "project", "required": True}, {"name": "purpose", "required": True}]},
             {"name": "build_framework_config", "description": "Generate a typed source-locked SPID/KID/BOS/SkyPatcher/FLM configuration.", "arguments": [{"name": "profile", "required": True}, {"name": "purpose", "required": True}]},
-        ]}
+        ]})
     elif method == "prompts/get":
         params = request.get("params", {})
         name = params.get("name")

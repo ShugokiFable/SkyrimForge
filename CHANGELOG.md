@@ -1,5 +1,60 @@
 # Changelog
 
+## 5.0.0
+
+Protocol release. Forge now speaks the current MCP revision without giving up
+the one every installed client still uses.
+
+- Added MCP `2026-07-28` support. That revision removes the `initialize`
+  handshake and carries the protocol version, client identity, and capabilities
+  as per-request `_meta` instead. Forge is now a **dual-era server**: a request
+  declaring the modern version is served statelessly under it, and an
+  `initialize` request still selects legacy semantics.
+- Added `server/discover`, which the revision requires servers to implement. It
+  returns the supported version list, capabilities, and `serverInfo` in one
+  request, and answers even when the request carries no `_meta`, because it is
+  the documented stdio probe a client sends before it knows what the server
+  speaks.
+- Added `UnsupportedProtocolVersionError` (`-32022`) carrying the supported
+  version list, so a client that asks for an unknown revision is corrected
+  rather than silently downgraded.
+- Added the caching hints the revision makes mandatory on complete results.
+  Static tool, prompt, and resource inventories are `public`; sanitized local
+  configuration is `private` with a zero TTL, because it reflects machine state
+  that `forge_config_set` can change.
+- Legacy responses are byte-identical to 4.2.5. `resultType`, `ttlMs`, and
+  `cacheScope` appear only when the client asked for the modern revision, so
+  already registered Codex, Claude, and Grok installations are unaffected.
+- Fixed `MANIFEST.json` failing to verify against a `git clone`. Five files
+  (`Install-AI-Bridge.ps1`, `Install-Forge-Skill.ps1`, `Install-or-Update.ps1`,
+  `Register-MCP.ps1`, `START-HERE.bat`) are declared `eol=crlf` in
+  `.gitattributes`, but the manifest recorded LF bytes, so anyone who cloned the
+  repository and checked the shipped integrity evidence got five mismatches.
+- Added a regression that hashes every manifest entry against the delivered
+  tree, and one that requires files declared `eol=crlf` to actually have CRLF
+  endings. Integrity evidence that only verifies on the author's machine is
+  worse than none, because it fails for the honest verifier and no one else.
+- Fixed CodeQL failing on every Dependabot branch with "Loaded a configuration
+  file for version '4.37.6', but running version '4.36.0'". The cause was not
+  permissions: `codeql-action/init` and `codeql-action/analyze` were bumped in
+  separate pull requests, so each branch ran a mismatched pair. Both are pinned
+  to one revision, Dependabot now groups them, and a regression fails if they
+  diverge. This unblocked four stalled pull requests.
+- Collapsed the product version to a single source of truth in
+  `skyrim_forge/version.py`. It was restated in the validator, the release
+  archive builder, the wheel generator string, a Go constant, packaging
+  metadata, plain-text pointers, and a batch-file title, and 4.2.4 shipped with
+  Windows CI still asserting 4.2.3. Every restatement is now gated against the
+  source, and CI derives the expected native version instead of hardcoding it.
+- Applied the blocked action updates: `actions/checkout` 7.0.1,
+  `actions/setup-python` 7.0.0, and `github/codeql-action` 4.37.6.
+- Rebuilt Windows and Linux native helpers reproducibly as 5.0.0 with pinned
+  Go 1.23.2.
+
+Every 4.x safety boundary is unchanged: no GUI launching, no arbitrary shell
+commands, no writes to live Skyrim `Data`, external processes disabled by
+default, and third-party tools hash-pinned rather than bundled.
+
 ## 4.2.5
 
 - Fixed fresh Windows installations failing when Python 3.11+ was not already on `PATH`.

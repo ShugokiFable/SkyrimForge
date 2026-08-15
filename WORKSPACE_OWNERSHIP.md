@@ -1,11 +1,18 @@
 # Workspace ownership
 
 - Product: Skyrim Forge
-- Authoritative repository: `S:\Apps\Skyrim Tools\skyrim-forge-git`
-- Active worktree: Git worktree for the branch below; the temporary path is intentionally not published
-- Branch: `fix/4.2.5-ai-bridge`
-- Parent: tag `v4.2.4`, commit `38cf10e`
-- Active version: `4.2.5`
-- Previous installed release: `S:\Apps\Skyrim Tools\Skyrim-Forge-4.2.4`
+- Authoritative repository: `https://github.com/ShugokiFable/SkyrimForge`
+- Branch: `main`
+- Parent: tag `v4.2.5`, commit `004c5f0`
+- Active version: `5.0.0`
+- Previous installed release: `Skyrim-Forge-4.2.5`
 
-The source repository owns the project. The versioned release folders are installed outputs. Skyrim `Data`, mod-manager staging, profiles, saves, and reference vaults remain read-only.
+The Git repository owns the project. Versioned release folders extracted beside
+it are installed outputs, not sources; edits belong in a clone of the repository
+above. Skyrim `Data`, mod-manager staging, profiles, saves, and reference vaults
+remain read-only.
+
+A prior local path was recorded here as authoritative and no longer exists. When
+a recorded owner root is absent, resolve authority from the published repository
+and the version pointers inside the candidate trees rather than editing an
+installed output in place.
