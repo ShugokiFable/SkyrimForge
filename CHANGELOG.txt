@@ -1,3 +1,8 @@
+Skyrim Forge 5.1.2
+
+- Hermes MCP setup now confirms tool enablement and rejects false-success
+  connection tests.
+
 Skyrim Forge 5.1.1
 
 - Fixed the advertised Papyrus compiler MCP tool so calls reach Forge.

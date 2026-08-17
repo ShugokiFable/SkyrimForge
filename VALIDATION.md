@@ -4,10 +4,10 @@
 
 - Source regression suite: PASS, 149 tests.
 - Full repository validator, `--scope full`: PASS with zero errors.
-- PowerShell parser gate: PASS for all Forge-owned scripts.
+- PowerShell parser gate: pending exact 5.1.2 startup probe.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
   Two-build reproducibility PASS; packaged and published helpers hash-equal;
-  the rebuilt helper reports `SkyrimForge.Native 5.1.1 go` and self-tests PASS.
+  the rebuilt helper reports `SkyrimForge.Native 5.1.2 go` and self-tests PASS.
 - Go format, vet, tests and race test: PASS.
 - Wheel and source distribution builds: PASS and deterministic.
 - MCP static surface: 52 tools, 19 resources, 7 prompts.
@@ -47,6 +47,13 @@
   installed 5.1.0 Python/MCP command. Hermes is installed but has no Forge MCP
   entry. Claude is not installed. Slash-style differences in Grok/Kimi paths
   were normalized before comparison.
+
+## Hermes registrar hotfix (5.1.2)
+
+- Hermes requires confirmation before enabling discovered Forge tools. Cancelling
+  that prompt returns exit code zero, so Forge now supplies the explicit `Y`.
+- A missing Hermes server also returns exit code zero. Forge now requires the
+  actual connection/tool-discovery text before it reports `READY`.
 
 ## Reproducing the release gate
 

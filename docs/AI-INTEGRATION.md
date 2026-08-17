@@ -1,6 +1,6 @@
 # AI integration
 
-Forge 5.1.1 uses one installed runtime for every AI client:
+Forge 5.1.2 uses one installed runtime for every AI client:
 
 ```text
 <FORGE_ROOT>\.venv\Scripts\python.exe -m skyrim_forge

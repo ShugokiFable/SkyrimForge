@@ -1,10 +1,10 @@
 # State
 
-- Active version: 5.1.1 release candidate
-- Parent: v5.1.0 at df5aba7
+- Active version: 5.1.2 release candidate
+- Parent: v5.1.1 at f06fe76
 - Authoritative owner: `https://github.com/ShugokiFable/SkyrimForge`, branch
   `main`
-- Preserved installed release: `Skyrim-Forge-5.1.0`
+- Preserved installed releases: `Skyrim-Forge-5.1.0`, `Skyrim-Forge-5.1.1`
 - Original MCP symptom: `forge_papyrus_compile` appeared in `tools/list` but
   had no dispatch case, so every call failed as an unknown tool
 - Provider symptom: Kimi and Hermes were reported as skill-only even though
@@ -20,9 +20,10 @@
 - Full repository validation: PASS, 149 tests
 - Native helpers: rebuilt reproducibly with pinned Go 1.23.2 for Windows x64
   and Linux x64
-- Live client audit: Codex, Grok, and Kimi point to the exact installed 5.1.0
-  MCP command; Hermes is installed but has no Forge MCP entry; Claude is absent
-- Live client configuration was not changed and the 5.1.1 candidate is not
-  installed or published
+- 5.1.1 release audit: Hermes' `mcp add` cancelled at its tool-enable prompt
+  while returning exit code zero; `mcp test` also returned zero for a missing
+  server. Both conditions require explicit output validation.
+- 5.1.2 real-client probe: PASS. Hermes persisted the Forge MCP entry and
+  discovered all 52 tools after the explicit confirmation.
 - Runtime boundary: Skyrim gameplay and third-party GUI behavior remain outside
   this bridge-only release

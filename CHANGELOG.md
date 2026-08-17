@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.1.2
+
+Hermes MCP registration hotfix.
+
+- Hermes asks interactively whether to enable discovered tools but returns a
+  successful exit code if that prompt is cancelled. Forge now supplies the
+  required explicit confirmation.
+- Hermes also returns exit code zero when a requested server is absent. Forge
+  now requires connection text reporting a successful connection/tool discovery
+  instead of trusting the exit code alone.
+
 ## 5.1.1
 
 AI bridge reliability release.

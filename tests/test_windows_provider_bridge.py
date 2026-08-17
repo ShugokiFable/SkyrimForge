@@ -132,7 +132,12 @@ class WindowsProviderBridgeTests(unittest.TestCase):
             fake_bin = temp / "bin"
             fake_bin.mkdir()
             call_log = temp / "hermes-calls.txt"
-            (fake_bin / "hermes.cmd").write_text('@echo %*>>"%FAKE_HERMES_LOG%"\n@exit /b 0\n', encoding="ascii")
+            (fake_bin / "hermes.cmd").write_text(
+                '@echo %*>>"%FAKE_HERMES_LOG%"\n'
+                '@if "%1 %2"=="mcp test" @echo Connected! Found 52 tools\n'
+                '@exit /b 0\n',
+                encoding="ascii",
+            )
             report = temp / "report.json"
             env = os.environ.copy()
             env.update({

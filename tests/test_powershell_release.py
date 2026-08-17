@@ -109,6 +109,8 @@ class PowerShellReleaseTests(unittest.TestCase):
         self.assertIn("'Hermes'", register)
         self.assertIn("Join-Path $KimiHome 'mcp.json'", register)
         self.assertIn('mcp test skyrim-forge', register)
+        self.assertIn("'Y' | & $Executable mcp add skyrim-forge", register)
+        self.assertIn("$HermesTestOutput -notmatch", register)
         self.assertIn("'hermes-agent\\venv\\Scripts\\hermes.exe'", register)
         self.assertNotIn('$Name?', register)
         self.assertIn('${Name}?', register)

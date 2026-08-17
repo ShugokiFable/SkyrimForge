@@ -154,10 +154,12 @@ function Invoke-Registration {
                 $HermesOriginal = if (Test-Path -LiteralPath $HermesConfigPath -PathType Leaf) { [IO.File]::ReadAllBytes($HermesConfigPath) } else { $null }
                 try {
                     & $Executable mcp remove skyrim-forge 2>$null | Out-Null
-                    & $Executable mcp add skyrim-forge --command $Python --args -m skyrim_forge mcp | Out-Null
+                    'Y' | & $Executable mcp add skyrim-forge --command $Python --args -m skyrim_forge mcp | Out-Null
                     if ($LASTEXITCODE -ne 0) { throw "Hermes registration exited $LASTEXITCODE." }
-                    & $Executable mcp test skyrim-forge | Out-Null
-                    if ($LASTEXITCODE -ne 0) { throw "Hermes MCP test exited $LASTEXITCODE." }
+                    $HermesTestOutput = (& $Executable mcp test skyrim-forge 2>&1 | Out-String)
+                    if ($LASTEXITCODE -ne 0 -or $HermesTestOutput -notmatch '(?im)(connected|found\s+\d+\s+tool)') {
+                        throw "Hermes MCP test did not confirm a Forge connection: $HermesTestOutput"
+                    }
                 } catch {
                     if ($null -ne $HermesOriginal) {
                         [IO.File]::WriteAllBytes($HermesConfigPath, $HermesOriginal)

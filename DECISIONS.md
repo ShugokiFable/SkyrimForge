@@ -8,12 +8,12 @@
   verified MCP mechanism.
 - Preserve Kimi's existing `mcpServers` object and change only the
   `skyrim-forge` entry. Other AI tools belong to the user.
-- Use Hermes' supported CLI rather than editing its YAML by hand, and treat a
-  successful connection test as the registration gate.
+- Use Hermes' supported CLI rather than editing its YAML by hand, explicitly
+  confirm tool enablement, and inspect connection output instead of trusting
+  its unreliable success exit code.
 - Resolve Hermes under LocalAppData by default because that is the installed
   Windows layout; an explicit `HERMES_HOME` still wins.
-- Do not publish, create a release, or repoint live clients from the validated
-  workspace candidate without explicit user approval.
+- Publication and live-client repointing are authorized for this hotfix.
 - Be a dual-era MCP server rather than migrating. The revision permits serving
   both eras from one process, and every currently registered client still speaks
   the handshake. Dropping it would break working installations to gain nothing.
