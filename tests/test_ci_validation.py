@@ -59,6 +59,12 @@ class WorkflowPinningTests(unittest.TestCase):
         self.assertIn("github/codeql-action", config.read_text(encoding="utf-8"),
                       "dependabot must group codeql-action so the pair cannot be split across pull requests")
 
+    def test_release_publish_is_idempotent(self):
+        workflow = (self.WORKFLOWS / "release.yml").read_text(encoding="utf-8")
+        self.assertIn('gh release view "$GITHUB_REF_NAME"', workflow)
+        self.assertIn('gh release upload "$GITHUB_REF_NAME" dist/* --clobber', workflow)
+        self.assertIn('gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes', workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

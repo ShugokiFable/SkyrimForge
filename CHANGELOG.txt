@@ -1,3 +1,10 @@
+Skyrim Forge 5.1.3
+
+- Release automation now refreshes existing tag assets instead of failing when
+  a release was created before the tag workflow reached its publish step.
+- A present-but-broken `.venv` is now detected and safely rebuilt.
+- The validated install uses the exact 5.1.3 folder and active user pointer.
+
 Skyrim Forge 5.1.2
 
 - Hermes MCP setup now confirms tool enablement and rejects false-success

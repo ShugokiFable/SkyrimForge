@@ -4,5 +4,7 @@
 2. [complete] Reproduce Hermes' false-success registrar behavior against the
    real client: cancelled tool-enable prompts and missing-server tests returned
    exit code zero.
-3. [in progress] Deliver 5.1.2 with explicit tool enablement, output-based
+3. [complete] Deliver 5.1.2 with explicit tool enablement, output-based
    Hermes connection verification, full validation, release, and deployment.
+4. [complete] Deliver 5.1.3 with idempotent release publication, a green tag
+   workflow, and an exact-version active installation folder.

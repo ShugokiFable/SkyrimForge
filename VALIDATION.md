@@ -2,12 +2,12 @@
 
 ## Current results
 
-- Source regression suite: PASS, 149 tests.
+- Source regression suite: PASS, 151 tests.
 - Full repository validator, `--scope full`: PASS with zero errors.
-- PowerShell parser gate: pending exact 5.1.2 startup probe.
+- PowerShell parser gate and exact START-HERE startup probe: PASS.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
   Two-build reproducibility PASS; packaged and published helpers hash-equal;
-  the rebuilt helper reports `SkyrimForge.Native 5.1.2 go` and self-tests PASS.
+  the rebuilt helper reports `SkyrimForge.Native 5.1.3 go` and self-tests PASS.
 - Go format, vet, tests and race test: PASS.
 - Wheel and source distribution builds: PASS and deterministic.
 - MCP static surface: 52 tools, 19 resources, 7 prompts.
@@ -54,6 +54,17 @@
   that prompt returns exit code zero, so Forge now supplies the explicit `Y`.
 - A missing Hermes server also returns exit code zero. Forge now requires the
   actual connection/tool-discovery text before it reports `READY`.
+
+## Release automation hotfix (5.1.3)
+
+- The v5.1.2 tag workflow failed only at publication because the public release
+  already existed. The release workflow now creates a missing release or
+  refreshes an existing release's assets with `--clobber`.
+- A regression requires both publication branches so a retry cannot regress to
+  duplicate-release failure.
+- The installed 5.1.2 venv launcher was present but could not execute because
+  its base interpreter was missing. The installer now treats execution as the
+  health gate and reconstructs only the exact non-reparse-point `.venv`.
 
 ## Reproducing the release gate
 

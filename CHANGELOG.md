@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.1.3
+
+Release automation and active-install correction.
+
+- Tag publication is now idempotent: if a release already exists, the workflow
+  refreshes its assets instead of failing while trying to create it again.
+- Installation now executes the existing virtual environment as a health check
+  and safely rebuilds it when its base Python has disappeared.
+- The validated installation is deployed under its exact semantic-version
+  folder and becomes the user-level `SKYRIM_FORGE_ROOT` target.
+
 ## 5.1.2
 
 Hermes MCP registration hotfix.

@@ -139,7 +139,11 @@ jobs:
       - name: Install, migrate, and reinstall
         shell: powershell
         run: |
+          New-Item -ItemType Directory -Force -Path './.venv/Scripts' | Out-Null
+          [IO.File]::WriteAllBytes((Join-Path $PWD '.venv/Scripts/python.exe'), [byte[]](0,1,2,3))
           ./Install-or-Update.ps1
+          & ./.venv/Scripts/python.exe -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)"
+          if ($LASTEXITCODE -ne 0) { throw 'Broken virtual environment was not repaired.' }
           $backup = "${env:SKYRIM_FORGE_CONFIG}.pre-3.0.1.bak"
           if (-not (Test-Path -LiteralPath $backup -PathType Leaf)) { throw "Legacy config backup was not created: $backup" }
           $migrated = Get-Content -LiteralPath $env:SKYRIM_FORGE_CONFIG -Raw

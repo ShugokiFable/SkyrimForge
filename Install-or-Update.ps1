@@ -169,7 +169,29 @@ Invoke-Checked 'Native helper self-test' $Native @('self-test')
 
 $Venv = Join-Path $Root '.venv'
 $VenvPython = Join-Path $Venv 'Scripts\python.exe'
-if (-not (Test-Path -LiteralPath $VenvPython -PathType Leaf)) {
+$VenvHealthy = $false
+if (Test-Path -LiteralPath $VenvPython -PathType Leaf) {
+    try {
+        & $VenvPython -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)" 2>$null
+        $VenvHealthy = ($LASTEXITCODE -eq 0)
+    } catch {
+        $VenvHealthy = $false
+    }
+}
+if (-not $VenvHealthy) {
+    if (Test-Path -LiteralPath $Venv) {
+        $ResolvedRoot = [IO.Path]::GetFullPath($Root).TrimEnd('\')
+        $ResolvedVenv = [IO.Path]::GetFullPath($Venv).TrimEnd('\')
+        if ([IO.Path]::GetDirectoryName($ResolvedVenv) -cne $ResolvedRoot) {
+            throw "Refusing to repair a virtual environment outside Forge root: $ResolvedVenv"
+        }
+        $VenvItem = Get-Item -LiteralPath $Venv -Force
+        if (($VenvItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "Refusing to repair a virtual environment through a reparse point: $ResolvedVenv"
+        }
+        Write-Warning "Existing Forge virtual environment is unusable; rebuilding $ResolvedVenv."
+        Remove-Item -LiteralPath $ResolvedVenv -Recurse -Force
+    }
     Invoke-Checked 'Virtual environment creation' $Python.Exe (@($Python.Args) + @('-m','venv',$Venv))
 }
 & $VenvPython -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)"

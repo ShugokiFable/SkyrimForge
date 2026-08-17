@@ -1,10 +1,11 @@
 # State
 
-- Active version: 5.1.2 release candidate
-- Parent: v5.1.1 at f06fe76
+- Active version: 5.1.3 validated release
+- Parent: v5.1.2 at 6f25163
 - Authoritative owner: `https://github.com/ShugokiFable/SkyrimForge`, branch
   `main`
-- Preserved installed releases: `Skyrim-Forge-5.1.0`, `Skyrim-Forge-5.1.1`
+- Preserved installed releases: `Skyrim-Forge-5.1.0`, `Skyrim-Forge-5.1.1`,
+  `Skyrim-Forge-5.1.2`
 - Original MCP symptom: `forge_papyrus_compile` appeared in `tools/list` but
   had no dispatch case, so every call failed as an unknown tool
 - Provider symptom: Kimi and Hermes were reported as skill-only even though
@@ -17,7 +18,7 @@
 - Hermes approach: use `hermes mcp add` and require
   `hermes mcp test skyrim-forge`
 - Targeted regressions: PASS, including byte-exact Kimi rollback on failure
-- Full repository validation: PASS, 149 tests
+- Full repository validation: PASS, 151 tests
 - Native helpers: rebuilt reproducibly with pinned Go 1.23.2 for Windows x64
   and Linux x64
 - 5.1.1 release audit: Hermes' `mcp add` cancelled at its tool-enable prompt
@@ -25,5 +26,12 @@
   server. Both conditions require explicit output validation.
 - 5.1.2 real-client probe: PASS. Hermes persisted the Forge MCP entry and
   discovered all 52 tools after the explicit confirmation.
+- 5.1.2 release workflow failure reproduced: publication attempted to create a
+  release that already existed. The workflow now refreshes existing assets.
+- 5.1.2 installed-runtime failure reproduced: `.venv\Scripts\python.exe`
+  existed but its base Python was gone. The installer now executes and repairs
+  an unusable environment instead of treating file presence as health.
+- Target deployment folder: `Skyrim-Forge-5.1.3`; older folders remain rollback
+  copies and must not be mistaken for the active user-level pointer.
 - Runtime boundary: Skyrim gameplay and third-party GUI behavior remain outside
   this bridge-only release

@@ -87,11 +87,20 @@ class PowerShellReleaseTests(unittest.TestCase):
         self.assertIn('Get-AuthenticodeSignature', installer)
         self.assertIn('Python Software Foundation', installer)
         self.assertIn("'existing-forge-venv'", installer)
+        self.assertIn('$VenvHealthy = $false', installer)
+        self.assertIn('Existing Forge virtual environment is unusable', installer)
+        self.assertIn('[IO.FileAttributes]::ReparsePoint', installer)
+        self.assertIn('Remove-Item -LiteralPath $ResolvedVenv -Recurse -Force', installer)
         self.assertIn("HKCU:\\SOFTWARE\\Python\\PythonCore", installer)
         self.assertIn("SetEnvironmentVariable('SKYRIM_FORGE_ROOT'", installer)
         self.assertIn("'INSTALLATION.json'", installer)
         self.assertIn("'workers\\SkyrimForge.UIWorker.ps1'", installer)
         self.assertIn("'tools.ui_worker.worker_sha256'", installer)
+
+    def test_windows_ci_exercises_broken_virtualenv_repair(self):
+        workflow = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text(encoding='utf-8')
+        self.assertIn("[IO.File]::WriteAllBytes((Join-Path $PWD '.venv/Scripts/python.exe')", workflow)
+        self.assertIn('Broken virtual environment was not repaired.', workflow)
 
     def test_provider_bridge_uses_exact_shared_runtime(self):
         register = (ROOT / 'Register-MCP.ps1').read_text(encoding='utf-8-sig')
