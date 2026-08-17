@@ -1,33 +1,28 @@
 # State
 
-- Active version: 5.1.0
-- Parent: v5.0.2 at 3982a82
-- Original symptom: FOMOD validation rejected installers that are legal per the
-  published ModConfig5.0 schema, most importantly any option carrying a
-  screenshot
-- Secondary symptom: the published `MANIFEST.json` did not verify against a
-  `git clone` of the repository it shipped in
-- Tertiary symptom: every CodeQL run on a Dependabot branch failed with a
-  configuration error, blocking four open pull requests
-- Runtime status: repository validation and MCP protocol behaviour are
-  tool-validated
-- Preserved rollback release: 5.0.2
-- Shared runtime: `.venv\Scripts\python.exe`
-- MCP era support: dual-era. `server/discover`, per-request `_meta` version
-  negotiation and `UnsupportedProtocolVersionError` for `2026-07-28`; the
-  `initialize` handshake is retained unchanged for `2025-11-25`, `2025-06-18`
-  and `2024-11-05`
-- MCP smoke result: 52 tools identical across both eras; legacy results carry
-  no modern-only fields
-- Version sources: one source of truth in `skyrim_forge/version.py`; seven
-  restatements (including the AI skill series) are gated against it and CI derives the native version string
-  instead of hardcoding it
-- Repository validation: PASS, 142 tests
-- Native helpers: rebuilt with pinned Go 1.23.2; two-build reproducibility PASS
-  for Windows x64 and Linux x64; packaged and published copies hash-equal
-- Remaining runtime boundary: Skyrim gameplay and third-party GUI behavior are
-  not proven by static or tool validation
-- Not exercised in this build: the Windows installer path, provider MCP
-  re-registration, and any live AI client speaking the modern revision. The
-  modern era is proven against the real stdio server, not against a shipped
-  client, because no installed client speaks `2026-07-28` yet.
+- Active version: 5.1.1 release candidate
+- Parent: v5.1.0 at df5aba7
+- Authoritative owner: `https://github.com/ShugokiFable/SkyrimForge`, branch
+  `main`
+- Preserved installed release: `Skyrim-Forge-5.1.0`
+- Original MCP symptom: `forge_papyrus_compile` appeared in `tools/list` but
+  had no dispatch case, so every call failed as an unknown tool
+- Provider symptom: Kimi and Hermes were reported as skill-only even though
+  both installed clients support MCP
+- Provider-home symptom: Hermes skills defaulted to `%USERPROFILE%\.hermes`,
+  but the installed application uses `%LOCALAPPDATA%\hermes`
+- Shared runtime: `.venv\Scripts\python.exe`; no provider-specific environment
+- Kimi approach: preserve all existing `mcpServers`, replace only
+  `skyrim-forge`, then run `kimi doctor`
+- Hermes approach: use `hermes mcp add` and require
+  `hermes mcp test skyrim-forge`
+- Targeted regressions: PASS, including byte-exact Kimi rollback on failure
+- Full repository validation: PASS, 149 tests
+- Native helpers: rebuilt reproducibly with pinned Go 1.23.2 for Windows x64
+  and Linux x64
+- Live client audit: Codex, Grok, and Kimi point to the exact installed 5.1.0
+  MCP command; Hermes is installed but has no Forge MCP entry; Claude is absent
+- Live client configuration was not changed and the 5.1.1 candidate is not
+  installed or published
+- Runtime boundary: Skyrim gameplay and third-party GUI behavior remain outside
+  this bridge-only release

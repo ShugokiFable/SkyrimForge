@@ -1,3 +1,13 @@
+Skyrim Forge 5.1.1
+
+- Fixed the advertised Papyrus compiler MCP tool so calls reach Forge.
+- Kimi now receives a preserving MCP configuration merge and doctor check;
+  failed checks restore the original configuration bytes.
+- Hermes now receives a real MCP registration plus connection test, with
+  byte-exact rollback if replacement fails.
+- Hermes skills now install to the actual LocalAppData home by default.
+- Added cross-provider Windows regression coverage for every corrected path.
+
 Skyrim Forge 5.1.0
 
 Framework linting was checked against a real mod corpus for the first time.

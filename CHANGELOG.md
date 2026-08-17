@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.1.1
+
+AI bridge reliability release.
+
+- Routed the advertised `forge_papyrus_compile` MCP tool to the service. Calls
+  no longer fall through to an unknown-tool error.
+- Registered Kimi through its preserving `mcp.json` configuration and verified
+  the result with `kimi doctor`; a failed doctor restores the original bytes.
+- Registered Hermes through its supported MCP CLI and required a successful
+  `hermes mcp test skyrim-forge` connection probe; failed replacement attempts
+  restore the original Hermes configuration bytes.
+- Corrected Hermes skill installation from the unused `%USERPROFILE%\.hermes`
+  path to `%LOCALAPPDATA%\hermes`, while preserving `HERMES_HOME` overrides.
+- Added Windows regression coverage for Kimi configuration preservation,
+  Hermes registration/testing, Hermes home resolution, and Papyrus MCP routing.
+
 ## 5.1.0
 
 Framework linting, validated against a real reference corpus for the first time.

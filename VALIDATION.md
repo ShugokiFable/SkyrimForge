@@ -2,12 +2,12 @@
 
 ## Current results
 
-- Source regression suite: PASS, 142 tests (1 skipped).
+- Source regression suite: PASS, 149 tests.
 - Full repository validator, `--scope full`: PASS with zero errors.
 - PowerShell parser gate: PASS for all Forge-owned scripts.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
   Two-build reproducibility PASS; packaged and published helpers hash-equal;
-  the rebuilt helper reports `SkyrimForge.Native 5.1.0 go` and self-tests PASS.
+  the rebuilt helper reports `SkyrimForge.Native 5.1.1 go` and self-tests PASS.
 - Go format, vet, tests and race test: PASS.
 - Wheel and source distribution builds: PASS and deterministic.
 - MCP static surface: 52 tools, 19 resources, 7 prompts.
@@ -22,10 +22,31 @@
 - Version source gate: PASS. Eight restatements agree with
   `skyrim_forge/version.py`, and neither the workflow nor the archive builder
   hardcodes a version.
-- Distributed integrity: PASS. All 214 manifest entries verify against the tree
+- Distributed integrity: PASS. All 215 manifest entries verify against the tree
   as checked out, and every file declared `eol=crlf` has CRLF endings on disk.
 - Skyrim runtime test: UNTESTED. Static validation does not prove gameplay or
   third-party GUI behavior.
+
+## AI bridge fixes (5.1.1)
+
+- `forge_papyrus_compile` was present in `tools/list` but missing from the MCP
+  dispatcher. A real MCP request now reaches the service and has a dedicated
+  regression.
+- Kimi registration preserves unrelated MCP servers, writes the exact shared
+  Forge Python command, and runs `kimi doctor`. If doctor fails, the prior
+  configuration is restored byte-for-byte. Array-shaped server maps are
+  rejected without changing the file.
+- Hermes registration uses its supported `mcp add` and `mcp test` commands;
+  failed add/test sequences restore the prior configuration byte-for-byte.
+- Hermes skill discovery defaults to `%LOCALAPPDATA%\hermes`; explicit
+  `HERMES_HOME` still wins.
+- Windows integration tests execute the real Forge PowerShell scripts against
+  isolated provider homes and controlled client command surfaces. They do not
+  mutate the user's live AI configuration.
+- Read-only live audit: Codex, Grok, and Kimi have enabled entries for the exact
+  installed 5.1.0 Python/MCP command. Hermes is installed but has no Forge MCP
+  entry. Claude is not installed. Slash-style differences in Grok/Kimi paths
+  were normalized before comparison.
 
 ## Reproducing the release gate
 
@@ -88,5 +109,7 @@ published specification, not against a shipped AI client, because no installed
 client speaks `2026-07-28` yet. The legacy era remains the path every currently
 registered client uses, and it is unchanged.
 
-The Windows installer, provider MCP re-registration, and the packaged release
-archive were not executed in this environment; GitHub CI performs those gates.
+The Windows scripts and provider registration paths were exercised in isolated
+homes. Live provider configurations were audited but not repointed to this
+workspace candidate. GitHub CI and actual client restarts remain publication
+and deployment gates.

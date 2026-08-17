@@ -166,13 +166,10 @@ jobs:
             $descriptor = Join-Path $skillHome 'skills/skyrim-forge/INSTALLATION.json'
             if (-not (Test-Path -LiteralPath $descriptor -PathType Leaf)) { throw "Installed Forge descriptor missing: $descriptor" }
           }
-      - name: Verify skill-only provider bridge
+      - name: Verify Kimi and Hermes MCP bridges
         shell: powershell
         run: |
-          $report = Join-Path $env:RUNNER_TEMP 'kimi-forge-integration.json'
-          ./Register-MCP.ps1 -Provider Kimi -Yes -ReportPath $report
-          $integration = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
-          if ($integration.providers[0].status -ne 'READY') { throw 'Kimi skill bridge is not ready.' }
+          ./.venv/Scripts/python.exe -m unittest tests.test_windows_provider_bridge -v
       - name: Verify installed runtime
         shell: powershell
         run: |

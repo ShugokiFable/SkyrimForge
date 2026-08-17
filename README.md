@@ -1,4 +1,4 @@
-# Skyrim Forge 5.1.0
+# Skyrim Forge 5.1.1
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
@@ -36,11 +36,11 @@ signature, and performs a per-user install before creating Forge's shared
 `.venv`. No AI-specific `PYTHONPATH` is required.
 
 The same setup installs the Forge skill for Codex, Claude, Grok, Kimi, and
-Hermes. It registers MCP through the verified Codex, Claude, and Grok command
-surfaces when those clients are installed. Kimi and Hermes use the same full
-Forge CLI through their installed skill when no verified MCP registrar is
-available. Every provider skill receives an `INSTALLATION.json` containing the
-exact shared CLI and MCP command arrays.
+Hermes. It registers the same stdio MCP server with every installed client;
+Kimi receives a preserving merge into `mcp.json`, while Hermes is registered
+and connection-tested through its supported MCP CLI. Every provider skill
+receives an `INSTALLATION.json` containing the exact shared CLI and MCP command
+arrays. Missing clients are reported without breaking installed providers.
 
 For unattended setup with an already selected Python executable:
 

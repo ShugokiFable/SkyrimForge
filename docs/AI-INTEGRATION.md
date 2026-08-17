@@ -1,6 +1,6 @@
 # AI integration
 
-Forge 5.0.0 uses one installed runtime for every AI client:
+Forge 5.1.1 uses one installed runtime for every AI client:
 
 ```text
 <FORGE_ROOT>\.venv\Scripts\python.exe -m skyrim_forge
@@ -22,12 +22,16 @@ are the authoritative machine-local launch commands. This avoids relying on
 | Codex | yes | `codex mcp` when installed |
 | Claude | yes | `claude mcp` when installed |
 | Grok | yes | `grok mcp` when installed |
-| Kimi | yes | skill/CLI; no verified local MCP registrar |
-| Hermes | yes | skill/CLI; no verified local MCP registrar |
+| Kimi | yes | preserving merge into `mcp.json`, followed by `kimi doctor` |
+| Hermes | yes | `hermes mcp`, followed by a live connection test |
 
 An absent provider is reported as `NOT_INSTALLED`; it does not make Forge
 unhealthy. A detected provider whose registration fails is reported as
 `FAILED` and makes the integration command fail.
+
+Hermes defaults to `%LOCALAPPDATA%\hermes`, matching its actual Windows
+installation layout. `HERMES_HOME` and every other provider-specific home
+override remain authoritative when explicitly set.
 
 External Skyrim tools remain separately configured, hash-pinned, and disabled
 until approved. Provider registration does not grant permission to write to

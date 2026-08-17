@@ -79,6 +79,27 @@ class McpTests(unittest.TestCase):
             result=handle(service,{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"forge_version","arguments":{}}})
             self.assertFalse(result["result"]["isError"])
 
+    def test_papyrus_compile_tool_reaches_the_service(self):
+        with tempfile.TemporaryDirectory() as td:
+            with patch("pathlib.Path.home", return_value=Path(td)):
+                service = ForgeService(load_config(Path(td) / "config.toml"))
+            with patch.object(service, "papyrus_compile", return_value={"result": "ROUTED"}):
+                response = handle(service, {
+                    "jsonrpc": "2.0",
+                    "id": 4,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "forge_papyrus_compile",
+                        "arguments": {
+                            "scripts": [],
+                            "output_dir": str(Path(td) / "compiled"),
+                            "approved": False,
+                        },
+                    },
+                })
+            self.assertFalse(response["result"]["isError"])
+            self.assertIn('"ROUTED"', response["result"]["content"][0]["text"])
+
 
 class DualEraMcpTests(unittest.TestCase):
     """2026-07-28 removed the handshake; Forge must serve both eras at once."""

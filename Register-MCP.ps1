@@ -33,6 +33,16 @@ function Resolve-ProviderCommand {
         $GrokDirect = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.grok\bin\grok.exe'
         if (Test-Path -LiteralPath $GrokDirect -PathType Leaf) { return $GrokDirect }
     }
+    if ($Name -eq 'Kimi') {
+        $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.kimi-code' }
+        $KimiDirect = Join-Path $KimiHome 'bin\kimi.exe'
+        if (Test-Path -LiteralPath $KimiDirect -PathType Leaf) { return $KimiDirect }
+    }
+    if ($Name -eq 'Hermes') {
+        $HermesHome = if ($env:HERMES_HOME) { $env:HERMES_HOME } else { Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'hermes' }
+        $HermesDirect = Join-Path $HermesHome 'hermes-agent\venv\Scripts\hermes.exe'
+        if (Test-Path -LiteralPath $HermesDirect -PathType Leaf) { return $HermesDirect }
+    }
     $Command = Get-Command $Name.ToLowerInvariant() -ErrorAction SilentlyContinue
     if ($Command) { return $Command.Source }
     return $null
@@ -40,15 +50,6 @@ function Resolve-ProviderCommand {
 
 function Invoke-Registration {
     param([string]$Name)
-    if ($Name -in @('Kimi', 'Hermes')) {
-        return [ordered]@{
-            provider = $Name
-            mode = 'skill-cli'
-            status = 'READY'
-            command = $null
-            detail = 'The supported local client has no verified MCP registrar. Forge remains available through the installed skill and exact CLI descriptor.'
-        }
-    }
     $Executable = Resolve-ProviderCommand -Name $Name
     if (-not $Executable) {
         return [ordered]@{
@@ -102,6 +103,69 @@ function Invoke-Registration {
                     $_.enabled
                 })
                 if ($GrokForge.Count -ne 1) { throw 'Grok MCP verification did not return the exact enabled Forge command.' }
+            }
+            'Kimi' {
+                $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.kimi-code' }
+                $KimiConfigPath = Join-Path $KimiHome 'mcp.json'
+                $KimiOriginal = if (Test-Path -LiteralPath $KimiConfigPath -PathType Leaf) { [IO.File]::ReadAllBytes($KimiConfigPath) } else { $null }
+                if (Test-Path -LiteralPath $KimiConfigPath -PathType Leaf) {
+                    $KimiConfig = Get-Content -LiteralPath $KimiConfigPath -Raw | ConvertFrom-Json
+                } else {
+                    $KimiConfig = [pscustomobject]@{}
+                }
+                if (-not $KimiConfig.PSObject.Properties['mcpServers']) {
+                    $KimiConfig | Add-Member -MemberType NoteProperty -Name mcpServers -Value ([pscustomobject]@{})
+                }
+                if ($null -eq $KimiConfig.mcpServers -or -not ($KimiConfig.mcpServers -is [psobject])) {
+                    throw 'Kimi mcp.json must contain an object-valued mcpServers property.'
+                }
+                $ForgeEntry = [pscustomobject][ordered]@{
+                    command = $Python
+                    args = @('-m', 'skyrim_forge', 'mcp')
+                }
+                if ($KimiConfig.mcpServers.PSObject.Properties['skyrim-forge']) {
+                    $KimiConfig.mcpServers.'skyrim-forge' = $ForgeEntry
+                } else {
+                    $KimiConfig.mcpServers | Add-Member -MemberType NoteProperty -Name 'skyrim-forge' -Value $ForgeEntry
+                }
+                New-Item -ItemType Directory -Force -Path $KimiHome | Out-Null
+                $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+                try {
+                    [IO.File]::WriteAllText($KimiConfigPath, ($KimiConfig | ConvertTo-Json -Depth 32) + [Environment]::NewLine, $Utf8NoBom)
+                    & $Executable doctor | Out-Null
+                    if ($LASTEXITCODE -ne 0) { throw "Kimi doctor exited $LASTEXITCODE." }
+                    $KimiVerified = Get-Content -LiteralPath $KimiConfigPath -Raw | ConvertFrom-Json
+                    $KimiForge = $KimiVerified.mcpServers.'skyrim-forge'
+                    if ($KimiForge.command -ne $Python -or (@($KimiForge.args) -join ' ') -ne '-m skyrim_forge mcp') {
+                        throw 'Kimi MCP verification did not return the exact Forge command.'
+                    }
+                } catch {
+                    if ($null -ne $KimiOriginal) {
+                        [IO.File]::WriteAllBytes($KimiConfigPath, $KimiOriginal)
+                    } elseif (Test-Path -LiteralPath $KimiConfigPath -PathType Leaf) {
+                        Remove-Item -LiteralPath $KimiConfigPath -Force
+                    }
+                    throw
+                }
+            }
+            'Hermes' {
+                $HermesHome = if ($env:HERMES_HOME) { $env:HERMES_HOME } else { Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'hermes' }
+                $HermesConfigPath = Join-Path $HermesHome 'config.yaml'
+                $HermesOriginal = if (Test-Path -LiteralPath $HermesConfigPath -PathType Leaf) { [IO.File]::ReadAllBytes($HermesConfigPath) } else { $null }
+                try {
+                    & $Executable mcp remove skyrim-forge 2>$null | Out-Null
+                    & $Executable mcp add skyrim-forge --command $Python --args -m skyrim_forge mcp | Out-Null
+                    if ($LASTEXITCODE -ne 0) { throw "Hermes registration exited $LASTEXITCODE." }
+                    & $Executable mcp test skyrim-forge | Out-Null
+                    if ($LASTEXITCODE -ne 0) { throw "Hermes MCP test exited $LASTEXITCODE." }
+                } catch {
+                    if ($null -ne $HermesOriginal) {
+                        [IO.File]::WriteAllBytes($HermesConfigPath, $HermesOriginal)
+                    } elseif (Test-Path -LiteralPath $HermesConfigPath -PathType Leaf) {
+                        Remove-Item -LiteralPath $HermesConfigPath -Force
+                    }
+                    throw
+                }
             }
         }
         return [ordered]@{

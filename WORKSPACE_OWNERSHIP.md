@@ -3,9 +3,9 @@
 - Product: Skyrim Forge
 - Authoritative repository: `https://github.com/ShugokiFable/SkyrimForge`
 - Branch: `main`
-- Parent: tag `v4.2.5`, commit `004c5f0`
-- Active version: `5.0.0`
-- Previous installed release: `Skyrim-Forge-4.2.5`
+- Parent: tag `v5.1.0`, commit `df5aba7`
+- Active version: `5.1.1` release candidate
+- Previous installed release: `Skyrim-Forge-5.1.0`
 
 The Git repository owns the project. Versioned release folders extracted beside
 it are installed outputs, not sources; edits belong in a clone of the repository

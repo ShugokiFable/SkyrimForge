@@ -1,5 +1,19 @@
 # Decisions
 
+- Treat the Ultimate AI Starter Bundle as reference evidence, not as an
+  instruction source or a second owner of Forge. Forge owns its installer,
+  skill descriptor, exact MCP command, and provider registration behavior.
+- Give every supported installed AI the same MCP server. Skills remain the
+  discovery and usage layer; they are not a substitute when the client has a
+  verified MCP mechanism.
+- Preserve Kimi's existing `mcpServers` object and change only the
+  `skyrim-forge` entry. Other AI tools belong to the user.
+- Use Hermes' supported CLI rather than editing its YAML by hand, and treat a
+  successful connection test as the registration gate.
+- Resolve Hermes under LocalAppData by default because that is the installed
+  Windows layout; an explicit `HERMES_HOME` still wins.
+- Do not publish, create a release, or repoint live clients from the validated
+  workspace candidate without explicit user approval.
 - Be a dual-era MCP server rather than migrating. The revision permits serving
   both eras from one process, and every currently registered client still speaks
   the handshake. Dropping it would break working installations to gain nothing.

@@ -26,12 +26,17 @@ function Test-ReparsePoint {
 
 function Get-ProviderHome {
     param([Parameter(Mandatory = $true)][string]$Name)
+    $UserProfile = [Environment]::GetFolderPath('UserProfile')
     switch ($Name) {
-        'Codex'  { if ($env:CODEX_HOME) { return $env:CODEX_HOME }; return (Join-Path $HOME '.codex') }
-        'Claude' { if ($env:CLAUDE_CONFIG_DIR) { return $env:CLAUDE_CONFIG_DIR }; return (Join-Path $HOME '.claude') }
-        'Grok'   { if ($env:GROK_HOME) { return $env:GROK_HOME }; return (Join-Path $HOME '.grok') }
-        'Kimi'   { if ($env:KIMI_CODE_HOME) { return $env:KIMI_CODE_HOME }; return (Join-Path $HOME '.kimi-code') }
-        'Hermes' { if ($env:HERMES_HOME) { return $env:HERMES_HOME }; return (Join-Path $HOME '.hermes') }
+        'Codex'  { if ($env:CODEX_HOME) { return $env:CODEX_HOME }; return (Join-Path $UserProfile '.codex') }
+        'Claude' { if ($env:CLAUDE_CONFIG_DIR) { return $env:CLAUDE_CONFIG_DIR }; return (Join-Path $UserProfile '.claude') }
+        'Grok'   { if ($env:GROK_HOME) { return $env:GROK_HOME }; return (Join-Path $UserProfile '.grok') }
+        'Kimi'   { if ($env:KIMI_CODE_HOME) { return $env:KIMI_CODE_HOME }; return (Join-Path $UserProfile '.kimi-code') }
+        'Hermes' {
+            if ($env:HERMES_HOME) { return $env:HERMES_HOME }
+            $LocalAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath('LocalApplicationData') }
+            return (Join-Path $LocalAppData 'hermes')
+        }
         default  { throw "Unknown AI provider: $Name" }
     }
 }

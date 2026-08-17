@@ -136,6 +136,7 @@ def _call(service: ForgeService, name: str, args: dict[str, Any]) -> Any:
         case "forge_framework_plan_validate": return service.framework_plan_validate(args["plan"])
         case "forge_framework_build": return service.framework_build(args["plan"], args["output_root"], approved)
         case "forge_papyrus_analyze": return service.papyrus_analyze(args["scripts"], args.get("imports") or [])
+        case "forge_papyrus_compile": return service.papyrus_compile(args["scripts"], args["output_dir"], args.get("imports") or None, args.get("flags_file") or None, approved, bool(args.get("optimize", True)))
         case "forge_native_plan_validate": return service.native_plan_validate(args["plan"])
         case "forge_native_scaffold": return service.native_scaffold(args["plan"], args["output_dir"], approved)
         case "forge_native_audit": return service.native_audit(args["project"])
