@@ -1,5 +1,44 @@
 # Changelog
 
+## 5.1.4
+
+Encoding correctness, a test that only passed on space-free paths, and a
+release profile that no longer reproduced.
+
+- **Provider configs are read as UTF-8, not the ANSI codepage.** On Windows
+  PowerShell 5.1, `Get-Content -Raw` without an explicit `-Encoding` decodes
+  using the ANSI codepage (Windows-1252), not UTF-8. `Register-MCP.ps1` read the
+  user's Kimi `mcp.json` that way and wrote the parsed object straight back, so
+  every non-ASCII character in that file would have been replaced by mojibake.
+  Measured on an `mcp.json` carrying one em dash: `Get-Content -Raw` turned 1 em
+  dash into 0 and produced 1 mojibake sequence; `ReadAllText` preserved it.
+  Four call sites moved to `[IO.File]::ReadAllText` across `Register-MCP.ps1`,
+  `Install-Forge-Skill.ps1` and `workers/SkyrimForge.UIWorker.ps1`. The UI
+  worker's path is caller-supplied and may be relative, so it is resolved with
+  `Convert-Path` first: .NET resolves relative paths against the process working
+  directory, not PowerShell's current location.
+
+- **The Hermes registration test asserted an unquoted command line.** PowerShell
+  quotes any argument containing a space, so an install under a path such as
+  `S:\Apps\Skyrim Tools\...` logs `--command "S:\Apps\..."`. That quoting is
+  required -- without it `hermes` would receive `--command S:\Apps\Skyrim` and
+  `Tools\...` as two separate arguments -- but the test compared against the bare
+  form and therefore only passed when the install path contained no spaces. The
+  registration code was correct; the assertion now strips quotes before
+  comparing.
+
+- **The shipped native helpers no longer reproduced from source.** Running
+  `scripts/validate_repository.py` against a clean checkout of 5.1.3 reported
+  both binaries as "not reproducible under the -buildvcs=false release profile":
+  they had been built with a different Go toolchain than the one the profile
+  now produces. Rebuilt deterministically, so a from-source rebuild matches the
+  published bytes again. `CHECKSUMS-SHA256.txt`, `MANIFEST.json`, `SBOM.spdx.json`
+  and `BUILD-RECEIPT.json` are regenerated to match.
+
+Validation: `scripts/validate_repository.py` -> **PASS**, no errors (5.1.3
+reported FAIL on the reproducibility check). `python -m unittest discover -s
+tests` -> 151 tests, OK. PowerShell parser gate -> PASS (9 scripts).
+
 ## 5.1.3
 
 Release automation and active-install correction.

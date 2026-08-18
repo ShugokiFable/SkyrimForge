@@ -149,7 +149,15 @@ class WindowsProviderBridgeTests(unittest.TestCase):
                 ROOT / "Register-MCP.ps1", "-Provider", "Hermes", "-Yes", "-ReportPath", str(report), env=env
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            calls = call_log.read_text(encoding="utf-8").splitlines()
+            # `hermes.cmd` logs %*, the raw child command line. PowerShell quotes
+            # any argument containing a space, so an install under a path like
+            # "S:\Apps\Skyrim Tools\..." is logged as --command "S:\Apps\...".
+            # That quoting is required -- without it hermes would receive
+            # `--command S:\Apps\Skyrim` and `Tools\...` as two arguments -- so
+            # compare with quotes stripped rather than asserting the bare form,
+            # which only ever held for space-free install paths.
+            calls = [line.replace('"', "") for line in
+                     call_log.read_text(encoding="utf-8").splitlines()]
             self.assertIn(f"mcp add skyrim-forge --command {python} --args -m skyrim_forge mcp", calls)
             self.assertIn("mcp test skyrim-forge", calls)
             provider = json.loads(report.read_text(encoding="utf-8-sig"))["providers"][0]

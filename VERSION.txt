@@ -1,3 +1,3 @@
-Skyrim Forge 5.1.3
-Parent: Skyrim Forge 5.1.2 (v5.1.2, 6f25163)
+Skyrim Forge 5.1.4
+Parent: Skyrim Forge 5.1.3 (v5.1.3, b443d6e)
 Status: validated release
