@@ -109,7 +109,12 @@ function Invoke-Registration {
                 $KimiConfigPath = Join-Path $KimiHome 'mcp.json'
                 $KimiOriginal = if (Test-Path -LiteralPath $KimiConfigPath -PathType Leaf) { [IO.File]::ReadAllBytes($KimiConfigPath) } else { $null }
                 if (Test-Path -LiteralPath $KimiConfigPath -PathType Leaf) {
-                    $KimiConfig = Get-Content -LiteralPath $KimiConfigPath -Raw | ConvertFrom-Json
+                    # ReadAllText, not Get-Content -Raw. On PS 5.1 Get-Content
+                    # without -Encoding decodes with the ANSI codepage, and this
+                    # object is written straight back at the WriteAllText below,
+                    # so every non-ASCII char in the user's mcp.json would be
+                    # replaced by mojibake.
+                    $KimiConfig = [IO.File]::ReadAllText($KimiConfigPath) | ConvertFrom-Json
                 } else {
                     $KimiConfig = [pscustomobject]@{}
                 }
@@ -134,7 +139,7 @@ function Invoke-Registration {
                     [IO.File]::WriteAllText($KimiConfigPath, ($KimiConfig | ConvertTo-Json -Depth 32) + [Environment]::NewLine, $Utf8NoBom)
                     & $Executable doctor | Out-Null
                     if ($LASTEXITCODE -ne 0) { throw "Kimi doctor exited $LASTEXITCODE." }
-                    $KimiVerified = Get-Content -LiteralPath $KimiConfigPath -Raw | ConvertFrom-Json
+                    $KimiVerified = [IO.File]::ReadAllText($KimiConfigPath) | ConvertFrom-Json
                     $KimiForge = $KimiVerified.mcpServers.'skyrim-forge'
                     if ($KimiForge.command -ne $Python -or (@($KimiForge.args) -join ' ') -ne '-m skyrim_forge mcp') {
                         throw 'Kimi MCP verification did not return the exact Forge command.'

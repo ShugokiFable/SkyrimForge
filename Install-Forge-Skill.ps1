@@ -13,7 +13,9 @@ $InstallationDescriptorPath = Join-Path $Root 'INSTALLATION.json'
 if (-not (Test-Path -LiteralPath $InstallationDescriptorPath -PathType Leaf)) {
     throw 'Forge is not installed. Run Install-or-Update.ps1 before installing provider skills.'
 }
-$InstallationDescriptor = Get-Content -LiteralPath $InstallationDescriptorPath -Raw | ConvertFrom-Json
+# ReadAllText, not Get-Content -Raw: on PS 5.1 Get-Content without -Encoding
+# decodes with the ANSI codepage, corrupting any non-ASCII in the descriptor.
+$InstallationDescriptor = [IO.File]::ReadAllText($InstallationDescriptorPath) | ConvertFrom-Json
 if (-not (Test-Path -LiteralPath $InstallationDescriptor.python -PathType Leaf)) {
     throw "Installed Forge Python is missing: $($InstallationDescriptor.python)"
 }

@@ -411,8 +411,8 @@
     {
       "executable": false,
       "path": "Install-Forge-Skill.ps1",
-      "sha256": "38ef244b962e2dc3aa06baae2b3ed189d5e39a086c680faaba73d8c17f96496f",
-      "size": 5032
+      "sha256": "84f34f622820226ee63b8aa425286a2eb829b57dd711584892de8af3c930dcdf",
+      "size": 5183
     },
     {
       "executable": false,
@@ -531,8 +531,8 @@
     {
       "executable": false,
       "path": "Register-MCP.ps1",
-      "sha256": "bafdcaef4385d50abd24e6bcc9d97129fb7646f75a8f98f6ec2ed842635dba4c",
-      "size": 11467
+      "sha256": "bcde636e833bd647f144e131964f15077262d1f5ddfbc8f1f16518639d37430b",
+      "size": 11823
     },
     {
       "executable": false,
@@ -1251,8 +1251,8 @@
     {
       "executable": false,
       "path": "workers/SkyrimForge.UIWorker.ps1",
-      "sha256": "26b282239fe29d372594c052120a5fb723a902a5eea68cb5ede60d3db74bfe7d",
-      "size": 6355
+      "sha256": "8032c8b81c1cf83a026d0d40bcc84da36aa1bcf89677d23ce7e01a99fe304f83",
+      "size": 6612
     },
     {
       "executable": false,

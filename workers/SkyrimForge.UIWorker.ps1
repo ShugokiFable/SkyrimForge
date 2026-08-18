@@ -49,7 +49,10 @@ function Find-Control($Window, $Step) {
     return $Control
 }
 
-$Job = Get-Content -LiteralPath $JobPath -Raw | ConvertFrom-Json
+# ReadAllText honours UTF-8 where Get-Content -Raw would use the ANSI codepage.
+# Convert-Path first: $JobPath is caller-supplied and .NET resolves relative
+# paths against the process CWD rather than PowerShell's current location.
+$Job = [IO.File]::ReadAllText((Convert-Path -LiteralPath $JobPath)) | ConvertFrom-Json
 if ($Job.schema -ne 'skyrim-forge-ui/1') { throw 'Unsupported UI job schema.' }
 $ProcessName = [IO.Path]::GetFileNameWithoutExtension([string]$Job.expected_process)
 $Process = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue | Select-Object -First 1
