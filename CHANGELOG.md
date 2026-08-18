@@ -35,8 +35,18 @@ release profile that no longer reproduced.
   published bytes again. `CHECKSUMS-SHA256.txt`, `MANIFEST.json`, `SBOM.spdx.json`
   and `BUILD-RECEIPT.json` are regenerated to match.
 
+- **The Go toolchain is now pinned wherever the natives are built or checked.**
+  Reproducibility is per-Go-version, not just per-flag, but neither
+  `scripts/rebuild_native_helpers.py` nor `validate_go` pinned one -- they used
+  whatever `go` was on PATH. On a machine with a newer Go than CI's, the gate
+  therefore reported the *shipped* binaries as irreproducible, and rebuilding to
+  "fix" that broke CI instead. Both now read the `go-version` pin straight out
+  of `.github/workflows/ci.yml`, so the gate answers the same locally and in CI.
+  Verified: 5.1.3 rebuilt under go1.23.2 reproduces the published SHA-256
+  byte-for-byte; under go1.26.5 it does not.
+
 Validation: `scripts/validate_repository.py` -> **PASS**, no errors (5.1.3
-reported FAIL on the reproducibility check). `python -m unittest discover -s
+reported FAIL on the reproducibility check when run under a non-pinned Go). `python -m unittest discover -s
 tests` -> 151 tests, OK. PowerShell parser gate -> PASS (9 scripts).
 
 ## 5.1.3

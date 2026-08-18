@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,10 +20,38 @@ PACKAGE_TARGETS = {
 GO = os.environ.get("SKYRIM_FORGE_GO") or shutil.which("go") or "go"
 
 
+def pinned_toolchain() -> str:
+    """The Go version CI builds with, read from the workflow rather than copied.
+
+    The published binaries only reproduce under one toolchain. CI pins
+    go-version 1.23.2 with GOTOOLCHAIN=local; a maintainer whose PATH happens to
+    hold a newer Go used to produce different bytes here and see the repository
+    validator report the *shipped* binaries as irreproducible -- the opposite of
+    what had happened. Rebuilding then broke CI. Verified: building 5.1.3 under
+    go1.23.2 reproduces the published SHA-256 exactly, while go1.26.5 does not.
+
+    GOTOOLCHAIN makes the local `go` fetch and use that exact version, so the
+    result matches CI regardless of what is installed.
+    """
+    workflow = ROOT / ".github" / "workflows" / "ci.yml"
+    versions = re.findall(r'go-version:\s*"([0-9]+\.[0-9]+(?:\.[0-9]+)?)"',
+                          workflow.read_text(encoding="utf-8"))
+    if not versions:
+        raise SystemExit("no go-version pin found in .github/workflows/ci.yml")
+    if len(set(versions)) != 1:
+        raise SystemExit(f"ci.yml pins conflicting Go versions: {sorted(set(versions))}")
+    return "go" + versions[0]
+
+
+TOOLCHAIN = pinned_toolchain()
+
+
 def build(target: str) -> None:
     output, environment = TARGETS[target]
     output.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy(); env.update(environment)
+    # Pin the toolchain, not just the flags. Reproducibility here is per-Go-version.
+    env["GOTOOLCHAIN"] = TOOLCHAIN
     command = [GO, "build", "-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid=", "-o", str(output), "."]
     subprocess.run(command, cwd=SOURCE, env=env, check=True)
     package = PACKAGE_TARGETS[target]

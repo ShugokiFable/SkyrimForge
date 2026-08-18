@@ -35,7 +35,32 @@ def _single_source_version() -> str:
     return match.group(1)
 
 
+def _pinned_go_toolchain() -> str:
+    """The Go version the release profile is defined against, read from CI.
+
+    Reproducibility here is per-Go-version, not just per-flag. CI pins
+    go-version 1.23.2, so the published binaries reproduce under that toolchain
+    and no other. This check used to build with whatever `go` was on PATH, which
+    made its verdict depend on the machine: on a box with a newer Go it reported
+    the *shipped* binaries as irreproducible, and "fixing" that by rebuilding
+    locally is what broke CI. Verified: 5.1.3 rebuilt under go1.23.2 reproduces
+    the published SHA-256 exactly; under go1.26.5 it does not.
+
+    ci.yml is the single source, so this reader and the one in
+    scripts/rebuild_native_helpers.py cannot drift apart.
+    """
+    workflow = ROOT / ".github" / "workflows" / "ci.yml"
+    if not workflow.exists():
+        return ""
+    versions = re.findall(r'go-version:\s*"([0-9]+\.[0-9]+(?:\.[0-9]+)?)"',
+                          workflow.read_text(encoding="utf-8"))
+    if not versions or len(set(versions)) != 1:
+        return ""
+    return "go" + versions[0]
+
+
 VERSION = _single_source_version()
+GO_TOOLCHAIN = _pinned_go_toolchain()
 MODERN_PROTOCOL = "2026-07-28"
 EXCLUDED = {".git", ".venv", "venv", ".go-cache", "__pycache__", "dist", "build", ".pytest_cache", "htmlcov", "REPORTS", "INSTALLATION.json"}
 REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.json", "CHECKSUMS-SHA256.txt"}
@@ -174,7 +199,10 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
         return {"result":"NOT-RUN"}
     gofmt = str(Path(go).with_name("gofmt.exe" if os.name == "nt" else "gofmt"))
     cwd = ROOT/"writer"/"native-go"
-    fmt = run([gofmt,"-l","."],cwd=cwd); vet=run([go,"vet","./..."],cwd=cwd); tests=run([go,"test","./..."],cwd=cwd); race=run([go,"test","-race","./..."],cwd=cwd)
+    # Pin the toolchain for every Go call, so this gate answers the same on a
+    # maintainer's machine as it does in CI regardless of the installed version.
+    goenv = {"GOTOOLCHAIN": GO_TOOLCHAIN} if GO_TOOLCHAIN else None
+    fmt = run([gofmt,"-l","."],cwd=cwd); vet=run([go,"vet","./..."],cwd=cwd,env=goenv); tests=run([go,"test","./..."],cwd=cwd,env=goenv); race=run([go,"test","-race","./..."],cwd=cwd,env=goenv)
     if fmt["returncode"] or fmt["stdout"].strip(): errors.append("gofmt failed")
     if vet["returncode"]: errors.append("go vet failed")
     if tests["returncode"]: errors.append("go tests failed")
@@ -183,6 +211,7 @@ def validate_go(errors: list[str], warnings: list[str]) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as td:
         td=Path(td)
         for target, env in {"linux":{"CGO_ENABLED":"0","GOOS":"linux","GOARCH":"amd64"},"windows":{"CGO_ENABLED":"0","GOOS":"windows","GOARCH":"amd64"}}.items():
+            if GO_TOOLCHAIN: env = {**env, "GOTOOLCHAIN": GO_TOOLCHAIN}
             suffix=".exe" if target=="windows" else ""; a=td/f"{target}-a{suffix}"; b=td/f"{target}-b{suffix}"
             for output in (a,b):
                 result=run([go,"build","-trimpath","-buildvcs=false","-ldflags=-s -w -buildid=","-o",str(output),"."],cwd=cwd,env=env)
