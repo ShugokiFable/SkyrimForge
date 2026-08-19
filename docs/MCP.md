@@ -58,6 +58,17 @@ That field is required by `2026-07-28`. Clients that have seen Forge advertise
 the revision (via `server/discover` or `initialize`) reject a `tools/call`
 payload that omits it, even when the call itself has no `_meta`. Handshake-era
 clients ignore the extra field. Caching hints are not attached to tool results.
+This behaviour shipped in 5.1.5; 5.1.4 is not usable with Claude Code on that
+revision.
+
+### Grok
+
+Grok wedges at eight **running** MCP servers. `Register-MCP.ps1 -Provider Grok`
+counts `[mcp_servers.*]` in `%USERPROFILE%\.grok\config.toml` and skips the add
+when Forge would be an eighth runner (7 configured, or 6 while the
+`mcp-search` plugin still loads). `grok mcp disable mcp-search` frees the
+plugin slot. Replacing an already-registered Forge command does not consume a
+new slot.
 
 ### Caching
 

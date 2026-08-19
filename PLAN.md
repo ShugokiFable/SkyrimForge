@@ -10,3 +10,5 @@
    workflow, and an exact-version active installation folder.
 5. [complete] Deliver 5.1.5 so Claude Code 2026-07-28 can call Forge tools:
    `tools/call` always carries `resultType: "complete"`.
+6. [complete] Deliver 5.1.6 so a fresh install cannot recreate a Documents
+   copy, and so Register-MCP will not wedge Grok at 8 running servers.

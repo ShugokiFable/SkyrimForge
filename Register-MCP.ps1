@@ -48,6 +48,22 @@ function Resolve-ProviderCommand {
     return $null
 }
 
+function Test-GrokForgeRegistrationAllowed {
+    # Same cliff as Ultimate AI Starter Bundle GROK-MCP-TROUBLESHOOTING.md:
+    # 8 running MCP servers wedge Grok (process never exits). Budget is 7
+    # configured once claude-mem's mcp-search plugin is disabled for Grok,
+    # else 6 while that plugin still loads. Replacing an existing Forge
+    # entry does not consume a new slot.
+    $CfgPath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.grok\config.toml'
+    if (-not (Test-Path -LiteralPath $CfgPath -PathType Leaf)) { return $true }
+    $Raw = [IO.File]::ReadAllText($CfgPath)
+    if ([regex]::IsMatch($Raw, '(?m)^\[mcp_servers\.skyrim-forge\]')) { return $true }
+    $Configured = ([regex]::Matches($Raw, '(?m)^\[mcp_servers\.')).Count
+    $PluginActive = -not [regex]::IsMatch($Raw, '(?m)^disabled_mcp_servers\s*=.*mcp-search')
+    if ($Configured -ge 7 -or ($Configured -ge 6 -and $PluginActive)) { return $false }
+    return $true
+}
+
 function Invoke-Registration {
     param([string]$Name)
     $Executable = Resolve-ProviderCommand -Name $Name
@@ -84,6 +100,15 @@ function Invoke-Registration {
                 if ($LASTEXITCODE -ne 0) { throw "Claude registration exited $LASTEXITCODE." }
             }
             'Grok' {
+                if (-not (Test-GrokForgeRegistrationAllowed)) {
+                    return [ordered]@{
+                        provider = $Name
+                        mode = 'mcp'
+                        status = 'SKIPPED'
+                        command = $Executable
+                        detail = 'Grok wedges at 8 running MCP servers. Forge was not added. Run grok mcp disable mcp-search and/or disable another server, then rerun Register-MCP.ps1 -Provider Grok. Require Forge 5.1.5+ so tools/call carries resultType.'
+                    }
+                }
                 & $Executable mcp remove skyrim-forge 2>$null | Out-Null
                 # Windows PowerShell 5 rewrites native `--` boundaries when the
                 # executable is invoked through a variable. Start-Process keeps

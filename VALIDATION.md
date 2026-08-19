@@ -1,5 +1,14 @@
 # Validation
 
+## 5.1.6 layout and Grok cliff
+
+- Default workspace follows `SKYRIM_FORGE_ROOT\Workspaces`; empty
+  `Documents\Skyrim Forge\Workspaces` migrates. Installer registers
+  `SKYRIM_FORGE_ROOT` before `config-show`.
+- `Register-MCP.ps1` contains `Test-GrokForgeRegistrationAllowed` and skips a
+  new Grok add at the 8-running cliff.
+- Claude `resultType` contract is unchanged from 5.1.5.
+
 ## Current results
 
 - Source regression suite: PASS, 155 tests.

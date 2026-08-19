@@ -19,4 +19,9 @@ Forge 5.0.0 accepts Forge 2.x `[papyrus]` tables. It moves `compiler` into `[too
 When `SKYRIM_FORGE_CONFIG` or an explicit `--config` path is supplied, new
 workspace, audit, and tool-vault defaults are created beside that configuration.
 This keeps sandboxed AI and CI installations inside the caller-selected writable
-root. The normal user configuration retains the standard user-profile defaults.
+root.
+
+A normal user config follows `SKYRIM_FORGE_ROOT\Workspaces` when the installer
+has registered that variable, otherwise `%USERPROFILE%\.skyrim-forge\Workspaces`.
+It does **not** create `%USERPROFILE%\Documents\Skyrim Forge`. An empty leftover
+folder at that old default is migrated on the next config load.

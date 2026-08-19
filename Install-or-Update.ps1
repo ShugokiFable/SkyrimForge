@@ -160,6 +160,23 @@ if (-not $Python) {
 $env:SKYRIM_FORGE_BOOTSTRAP_ROOT = $Root
 $ExpectedVersion = (& $Python.Exe @($Python.Args) -c "import os,sys; sys.path.insert(0, os.environ['SKYRIM_FORGE_BOOTSTRAP_ROOT']); from skyrim_forge.version import VERSION; print(VERSION)").Trim()
 if (-not $ExpectedVersion) { throw 'Could not read the bundled Forge version.' }
+
+$MyDocuments = [Environment]::GetFolderPath('MyDocuments')
+if ($MyDocuments) {
+    $DocumentsPrefix = $MyDocuments.TrimEnd('\') + '\'
+    if ($Root.StartsWith($DocumentsPrefix, [StringComparison]::OrdinalIgnoreCase) -or ($Root.TrimEnd('\') -eq $MyDocuments.TrimEnd('\'))) {
+        Write-Warning ('Forge is installing from Documents ({0}). The live product belongs in your Skyrim tools folder as Skyrim-Forge-{1}. Do not keep a second copy in Documents; MCP must point at the tools-folder venv.' -f $Root, $ExpectedVersion)
+    }
+}
+
+$EnvironmentRegistered = $true
+try {
+    [Environment]::SetEnvironmentVariable('SKYRIM_FORGE_ROOT', $Root, 'User')
+} catch {
+    $EnvironmentRegistered = $false
+    Write-Warning "Could not register SKYRIM_FORGE_ROOT for future processes: $($_.Exception.Message)"
+}
+$env:SKYRIM_FORGE_ROOT = $Root
 $Native = Join-Path $Root 'writer\published\win-x64\SkyrimForge.Native.exe'
 if (-not (Test-Path -LiteralPath $Native -PathType Leaf)) { throw "Bundled native helper is missing: $Native" }
 $ExpectedNative = "SkyrimForge.Native $ExpectedVersion go"
@@ -223,14 +240,6 @@ if (Test-Path -LiteralPath $UiWorker -PathType Leaf) {
 }
 Invoke-Checked 'Forge doctor' $VenvPython @('-m','skyrim_forge','doctor')
 
-$EnvironmentRegistered = $true
-try {
-    [Environment]::SetEnvironmentVariable('SKYRIM_FORGE_ROOT', $Root, 'User')
-} catch {
-    $EnvironmentRegistered = $false
-    Write-Warning "Could not register SKYRIM_FORGE_ROOT for future processes: $($_.Exception.Message)"
-}
-$env:SKYRIM_FORGE_ROOT = $Root
 $Descriptor = [ordered]@{
     product = 'Skyrim Forge'
     version = $ExpectedVersion

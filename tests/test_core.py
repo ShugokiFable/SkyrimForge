@@ -39,6 +39,46 @@ class CoreTests(unittest.TestCase):
             self.assertTrue(config.config_path.is_file())
             self.assertFalse(config.allow_external_processes)
 
+    def test_user_workspace_follows_skyrim_forge_root_not_documents(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            home = root / "home"
+            install = root / "Skyrim Tools" / "Skyrim-Forge-5.1.6"
+            install.mkdir(parents=True)
+            default_config = home / ".skyrim-forge" / "config.toml"
+            with patch("pathlib.Path.home", return_value=home), \
+                 patch("skyrim_forge.config.DEFAULT_HOME", home / ".skyrim-forge"), \
+                 patch("skyrim_forge.config.DEFAULT_CONFIG", default_config), \
+                 patch.dict(os.environ, {"SKYRIM_FORGE_ROOT": str(install)}, clear=False):
+                os.environ.pop("SKYRIM_FORGE_CONFIG", None)
+                config = load_config()
+            self.assertEqual(config.workspace_root, install / "Workspaces")
+            self.assertNotIn("Documents", config.workspace_root.parts)
+            self.assertNotIn("Skyrim Forge", config.workspace_root.parts)
+
+    def test_empty_documents_workspace_migrates_to_install_root(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            home = root / "home"
+            install = root / "tools" / "Skyrim-Forge-5.1.6"
+            install.mkdir(parents=True)
+            legacy = home / "Documents" / "Skyrim Forge" / "Workspaces"
+            legacy.mkdir(parents=True)
+            cfg = home / ".skyrim-forge" / "config.toml"
+            cfg.parent.mkdir(parents=True)
+            cfg.write_text(
+                '[paths]\nworkspace_root = "{0}"\n'.format(str(legacy).replace("\\", "\\\\")),
+                encoding="utf-8",
+            )
+            with patch("pathlib.Path.home", return_value=home), \
+                 patch("skyrim_forge.config.DEFAULT_HOME", home / ".skyrim-forge"), \
+                 patch("skyrim_forge.config.DEFAULT_CONFIG", cfg), \
+                 patch.dict(os.environ, {"SKYRIM_FORGE_ROOT": str(install)}, clear=False):
+                os.environ.pop("SKYRIM_FORGE_CONFIG", None)
+                config = load_config()
+            self.assertEqual(config.workspace_root, install / "Workspaces")
+            self.assertTrue(any("Documents\\Skyrim Forge" in warning or "Documents" in warning for warning in config.load_warnings))
+
     def test_configured_seven_zip_is_an_allowed_read_target(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

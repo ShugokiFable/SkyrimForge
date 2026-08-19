@@ -26,6 +26,11 @@
   `ping`. Claude Code 2026-07-28 requires it on any server that advertised that
   revision, including stdio calls that have no `_meta`. Handshake-era clients
   ignore the extra field. Do not put caching hints on tool results.
+- Default job staging follows `SKYRIM_FORGE_ROOT\Workspaces`. Never create
+  `Documents\Skyrim Forge` as if it were the product. The live install is a
+  versioned folder under the user's Skyrim tools directory.
+- Refuse to add Forge as a new Grok MCP server when the add would reach 8
+  running servers. Skip with an actionable message rather than wedge the client.
 - Refuse an unknown protocol version with `UnsupportedProtocolVersionError` and
   the supported list rather than silently downgrading it, so a client can
   correct itself instead of guessing.

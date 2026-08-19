@@ -1,5 +1,22 @@
 # Changelog
 
+## 5.1.6
+
+Fresh installs no longer grow a second Forge tree in Documents, and Grok
+registration no longer wedges the client.
+
+- **Default workspace is the live install, not `Documents\Skyrim Forge`.**
+  That folder was a product-named staging path, not an install. `SKYRIM_FORGE_ROOT\Workspaces`
+  wins; isolated `--config` trees still stage beside the config file. An empty
+  leftover Documents workspace is migrated. `Install-or-Update.ps1` registers
+  `SKYRIM_FORGE_ROOT` before `config-show` and warns when it is run from Documents.
+- **`Register-MCP.ps1` respects Grok's 8-running-server cliff.** Adding Forge
+  as a new server is skipped at 7 configured (or 6 while `mcp-search` still
+  loads). Replacing an existing Forge entry is allowed. Claude's `resultType`
+  contract from 5.1.5 is unchanged.
+- **Docs name the one live layout:** versioned `Skyrim-Forge-<version>` under
+  the Skyrim tools folder; optional git clone beside it; never Documents.
+
 ## 5.1.5
 
 Claude Code 2026-07-28 could list Forge tools and then fail every `tools/call`.

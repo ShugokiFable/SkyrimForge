@@ -1,4 +1,4 @@
-# Skyrim Forge 5.1.5
+# Skyrim Forge 5.1.6
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
@@ -24,11 +24,18 @@ The gate maps every bundled file to its origin, author, licence or permission ba
 
 ## Install
 
-1. Extract the release into a permanent tools folder.
+1. Extract the release into your **Skyrim tools folder** as
+   `Skyrim-Forge-5.1.6` (same directory as xEdit, houseCARL, Spooky, …).
+   Do not clone or extract into `Documents`. Do not keep a second copy.
 2. Run `START-HERE.bat`.
 3. Choose **Install/update Forge and connect all detected AI apps**.
-4. Configure core paths.
+4. Configure core paths. Job staging defaults to `<this install>\Workspaces`.
 5. Configure only the external tools actually installed on the machine.
+
+Claude Code 2026-07-28 requires Forge **5.1.5 or newer** (`tools/call` must
+carry `resultType`). Grok wedges at 8 running MCP servers; `Register-MCP.ps1`
+will skip Grok rather than take the last slot. See [docs/INSTALLATION.md](docs/INSTALLATION.md)
+and [docs/MCP.md](docs/MCP.md).
 
 If Python 3.11+ is not installed, that explicit menu choice downloads the pinned
 Python 3.13.14 installer from python.org, verifies its SHA-256 and Authenticode

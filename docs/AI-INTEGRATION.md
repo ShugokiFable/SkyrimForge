@@ -1,6 +1,6 @@
 # AI integration
 
-Forge 5.1.3 uses one installed runtime for every AI client:
+Forge 5.1.6 uses one installed runtime for every AI client:
 
 ```text
 <FORGE_ROOT>\.venv\Scripts\python.exe -m skyrim_forge
@@ -21,7 +21,7 @@ are the authoritative machine-local launch commands. This avoids relying on
 |---|---:|---:|
 | Codex | yes | `codex mcp` when installed |
 | Claude | yes | `claude mcp` when installed |
-| Grok | yes | `grok mcp` when installed |
+| Grok | yes | `grok mcp` when installed; skipped if the add would wedge at 8 running servers |
 | Kimi | yes | preserving merge into `mcp.json`, followed by `kimi doctor` |
 | Hermes | yes | `hermes mcp`, followed by a live connection test |
 

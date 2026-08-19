@@ -100,6 +100,39 @@ def _integer(value: Any, default: int, minimum: int, maximum: int) -> int:
     return max(minimum, min(maximum, value))
 
 
+def _default_workspace(*, base: Path, isolated: bool) -> Path:
+    """Job staging lives with the live install, never under Documents.
+
+    Isolated/CI configs (`--config` or SKYRIM_FORGE_CONFIG) stay beside that
+    file. A normal user config follows SKYRIM_FORGE_ROOT when the installer
+    registered it, otherwise `%USERPROFILE%\\.skyrim-forge\\Workspaces`.
+    `Documents\\Skyrim Forge` is a leftover product-named folder, not an install.
+    """
+    if isolated:
+        return base / "Workspaces"
+    env_root = os.environ.get("SKYRIM_FORGE_ROOT")
+    if env_root and env_root.strip():
+        return Path(os.path.expandvars(os.path.expanduser(env_root.strip()))) / "Workspaces"
+    return DEFAULT_HOME / "Workspaces"
+
+
+def _is_legacy_documents_workspace(path: Path) -> bool:
+    parts = path.parts
+    return len(parts) >= 3 and parts[-3:] == ("Documents", "Skyrim Forge", "Workspaces")
+
+
+def _workspace_is_empty(path: Path) -> bool:
+    if not path.exists():
+        return True
+    if not path.is_dir():
+        return False
+    try:
+        next(path.iterdir())
+    except StopIteration:
+        return True
+    return False
+
+
 def default_tools() -> dict[str, ToolConfig]:
     return {name: ToolConfig() for name in (
         "xedit", "mo2", "loot", "wrye_bash", "creation_kit", "ckpe_loader",
@@ -141,10 +174,21 @@ def load_config(path: str | Path | None = None, *, create: bool = True) -> Forge
     if not all(isinstance(section, dict) for section in (paths, safety, limits, tools_data, papyrus)):
         raise ConfigurationError("Configuration sections must be TOML tables")
 
-    workspace_default = base / "Workspaces" if isolated else Path.home() / "Documents" / "Skyrim Forge" / "Workspaces"
+    workspace_default = _default_workspace(base=base, isolated=isolated)
     audit_default = base / "audit.jsonl" if isolated else Path.home() / ".skyrim-forge" / "audit.jsonl"
     vault_default = base / "tool-vault" if isolated else DEFAULT_HOME / "tool-vault"
     workspace = _path(paths.get("workspace_root"), base) or workspace_default
+    if _is_legacy_documents_workspace(workspace) and _workspace_is_empty(workspace):
+        workspace = workspace_default
+        warnings.append(
+            "Empty default workspace was under Documents\\Skyrim Forge; "
+            f"using {workspace} instead. The live product belongs in the Skyrim tools folder."
+        )
+    elif _is_legacy_documents_workspace(workspace):
+        warnings.append(
+            "workspace_root is still Documents\\Skyrim Forge. Move it under the live "
+            "SKYRIM_FORGE_ROOT install with config-set workspace_root; do not keep a second Forge tree in Documents."
+        )
     audit = _path(paths.get("audit_log"), base) or audit_default
     tools = default_tools()
     unknown_papyrus = set(papyrus) - {"compiler", "flags", "imports"}
