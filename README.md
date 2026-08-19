@@ -1,4 +1,4 @@
-# Skyrim Forge 5.1.4
+# Skyrim Forge 5.1.5
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 

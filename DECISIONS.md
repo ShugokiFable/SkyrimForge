@@ -20,8 +20,12 @@
 - Decide the era from what the client sends, not from configuration. A request
   declaring the modern version in `_meta` is answered under that revision; an
   `initialize` request selects legacy semantics.
-- Never add modern-only fields to a legacy response. `resultType`, `ttlMs` and
+- Never add modern-only fields to a legacy list/read response. `ttlMs` and
   `cacheScope` appear only when the client asked for the modern revision.
+- Always attach `resultType: "complete"` to `tools/call`, `prompts/get` and
+  `ping`. Claude Code 2026-07-28 requires it on any server that advertised that
+  revision, including stdio calls that have no `_meta`. Handshake-era clients
+  ignore the extra field. Do not put caching hints on tool results.
 - Refuse an unknown protocol version with `UnsupportedProtocolVersionError` and
   the supported list rather than silently downgrading it, so a client can
   correct itself instead of guessing.

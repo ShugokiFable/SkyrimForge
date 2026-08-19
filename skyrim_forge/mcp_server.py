@@ -18,8 +18,10 @@ SUPPORTED_VERSIONS = [MODERN_PROTOCOL, *LEGACY_PROTOCOLS]
 # 2026-07-28 carries version, identity and capabilities as per-request metadata
 # instead of an `initialize` handshake. Forge is a dual-era server: a request
 # that declares the modern version in `_meta` is answered statelessly under that
-# revision, and an `initialize` request still selects legacy semantics so the
-# already-registered Codex, Claude and Grok clients keep working unchanged.
+# revision, and an `initialize` request still selects legacy list/read shapes so
+# handshake-era Codex and Grok keep working. tools/call always names its result:
+# Claude Code 2026-07-28 rejects a server that advertised that revision and then
+# omitted resultType, including when the call itself has no `_meta`.
 META_PROTOCOL_VERSION = "io.modelcontextprotocol/protocolVersion"
 META_SERVER_INFO = "io.modelcontextprotocol/serverInfo"
 UNSUPPORTED_PROTOCOL_VERSION = -32022
@@ -188,6 +190,19 @@ def _cacheable(result: dict[str, Any], uri: str | None = None) -> dict[str, Any]
     return {**result, "resultType": "complete", "ttlMs": 0 if private else STATIC_TTL_MS, "cacheScope": "private" if private else "public"}
 
 
+def _complete(result: dict[str, Any]) -> dict[str, Any]:
+    """Name a successful result so a 2026-07-28 client can parse it.
+
+    Caching hints stay on list/read/discover only. tools/call, prompts/get,
+    ping, and a modern initialize still have to carry `resultType`, or a client
+    that already learned the server implements 2026-07-28 rejects the payload.
+    Handshake-era clients ignore the extra field.
+    """
+    if result.get("resultType"):
+        return result
+    return {**result, "resultType": "complete"}
+
+
 def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | None:
     if request.get("jsonrpc") != "2.0":
         raise ValueError("JSON-RPC 2.0 required")
@@ -198,18 +213,23 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
     declared = _declared_version(request)
     if declared is not None and declared not in PROTOCOLS:
         return {"jsonrpc": "2.0", "id": request_id, "error": {"code": UNSUPPORTED_PROTOCOL_VERSION, "message": "Unsupported protocol version", "data": {"supported": SUPPORTED_VERSIONS, "requested": declared}}}
-    # Only the modern revision carries `resultType` and caching hints. A legacy
-    # client must keep receiving exactly the shape its revision defines.
+    # List/read caching hints are modern-only so handshake-era inventory
+    # responses stay byte-identical. tools/call always carries resultType: a
+    # client that saw 2026-07-28 in server/discover or initialize requires it
+    # even when the call itself has no `_meta`.
     modern = declared == MODERN_PROTOCOL or method == "server/discover"
     cache = _cacheable if modern else (lambda result, uri=None: result)
     if method == "server/discover":
         result = cache({"supportedVersions": SUPPORTED_VERSIONS, "capabilities": CAPABILITIES, "instructions": INSTRUCTIONS, "_meta": {META_SERVER_INFO: SERVER_INFO}})
     elif method == "initialize":
-        requested = request.get("params", {}).get("protocolVersion", "2025-11-25")
+        params = request.get("params") if isinstance(request.get("params"), dict) else {}
+        requested = params.get("protocolVersion", "2025-11-25")
         protocol = requested if requested in PROTOCOLS else "2025-11-25"
         result = {"protocolVersion": protocol, "capabilities": CAPABILITIES, "serverInfo": SERVER_INFO, "instructions": INSTRUCTIONS}
+        if protocol == MODERN_PROTOCOL:
+            result = _complete(result)
     elif method == "ping":
-        result = {}
+        result = _complete({})
     elif method == "tools/list":
         result = cache({"tools": [{"name": name, **spec} for name, spec in sorted(TOOL_SPECS.items())]})
     elif method == "tools/call":
@@ -219,9 +239,9 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
         if name not in TOOL_SPECS or not isinstance(args, dict):
             raise ValueError("Unknown tool or invalid arguments")
         try:
-            result = _text(_call(service, name, args))
+            result = _complete(_text(_call(service, name, args)))
         except Exception as exc:
-            result = _error(exc)
+            result = _complete(_error(exc))
     elif method == "resources/list":
         result = cache({"resources": [
             {"uri": "forge://docs/automation-fabric", "name": "Automation Fabric", "mimeType": "text/markdown"},
@@ -336,7 +356,7 @@ def handle(service: ForgeService, request: dict[str, Any]) -> dict[str, Any] | N
             prompt = f"Build a {args.get('profile','<profile>')} configuration for {args.get('purpose','<purpose>')}. Use the exact source-locked profile, create a typed framework plan, validate and build it with Forge, preserve unknown/version-specific syntax as unverified rather than rewriting it, and treat runtime logs as stronger evidence than static lint."
         else:
             raise ValueError(f"Unknown prompt: {name}")
-        result = {"description": name, "messages": [{"role": "user", "content": {"type": "text", "text": prompt}}]}
+        result = _complete({"description": name, "messages": [{"role": "user", "content": {"type": "text", "text": prompt}}]})
     else:
         raise ValueError(f"Unsupported method: {method}")
     return {"jsonrpc": "2.0", "id": request_id, "result": result}

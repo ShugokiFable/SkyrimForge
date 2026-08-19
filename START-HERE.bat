@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions
-title Skyrim Forge 5.1.4
+title Skyrim Forge 5.1.5
 set "FORGE_PS_GATE=%~dp0PowerShell-Parse-Gate.ps1"
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%FORGE_PS_GATE%"
 if errorlevel 1 (

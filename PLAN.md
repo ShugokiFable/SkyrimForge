@@ -8,3 +8,5 @@
    Hermes connection verification, full validation, release, and deployment.
 4. [complete] Deliver 5.1.3 with idempotent release publication, a green tag
    workflow, and an exact-version active installation folder.
+5. [complete] Deliver 5.1.5 so Claude Code 2026-07-28 can call Forge tools:
+   `tools/call` always carries `resultType: "complete"`.

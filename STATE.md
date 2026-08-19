@@ -1,11 +1,13 @@
 # State
 
-- Active version: 5.1.3 validated release
-- Parent: v5.1.2 at 6f25163
+- Active version: 5.1.5
+- Parent: v5.1.4 at effe274
 - Authoritative owner: `https://github.com/ShugokiFable/SkyrimForge`, branch
   `main`
-- Preserved installed releases: `Skyrim-Forge-5.1.0`, `Skyrim-Forge-5.1.1`,
-  `Skyrim-Forge-5.1.2`
+- Preserved installed releases: `Skyrim-Forge-5.1.3`, `Skyrim-Forge-5.1.4`
+- 5.1.5 MCP symptom: Claude Code 2026-07-28 listed Forge tools then rejected
+  every `tools/call` (`missing required resultType`). List/read had the field;
+  `tools/call` did not. Fixed by always naming complete tool results.
 - Original MCP symptom: `forge_papyrus_compile` appeared in `tools/list` but
   had no dispatch case, so every call failed as an unknown tool
 - Provider symptom: Kimi and Hermes were reported as skill-only even though

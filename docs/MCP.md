@@ -51,6 +51,14 @@ so a client can retry rather than guess:
           "requested":"1900-01-01"}}}
 ```
 
+### Tool results
+
+`tools/call`, `prompts/get`, and `ping` always carry `resultType: "complete"`.
+That field is required by `2026-07-28`. Clients that have seen Forge advertise
+the revision (via `server/discover` or `initialize`) reject a `tools/call`
+payload that omits it, even when the call itself has no `_meta`. Handshake-era
+clients ignore the extra field. Caching hints are not attached to tool results.
+
 ### Caching
 
 Complete results for `server/discover`, `tools/list`, `prompts/list`,

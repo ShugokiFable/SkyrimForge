@@ -1,3 +1,11 @@
+Skyrim Forge 5.1.5
+
+- tools/call, prompts/get and ping now carry resultType: complete. Claude Code
+  2026-07-28 rejected every Forge tool call because list/read had the field
+  and tools/call did not.
+- initialize that negotiates 2026-07-28 also names its result. Handshake-era
+  2025 initialize responses stay unchanged.
+
 Skyrim Forge 5.1.4
 
 - Provider configs are read as UTF-8 instead of the Windows ANSI codepage.

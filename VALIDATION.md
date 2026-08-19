@@ -2,7 +2,7 @@
 
 ## Current results
 
-- Source regression suite: PASS, 151 tests.
+- Source regression suite: PASS, 155 tests.
 - Full repository validator, `--scope full`: PASS with zero errors.
 - PowerShell parser gate and exact START-HERE startup probe: PASS.
 - Exact native build: PASS with pinned Go 1.23.2 for Windows x64 and Linux x64.
@@ -17,8 +17,17 @@
   - A modern `tools/list` carries the mandatory caching hints.
   - An unknown version is refused with code `-32022` and the supported list.
   - The `initialize` handshake still negotiates `2025-11-25`.
-  - A legacy result carries none of `resultType`, `ttlMs`, `cacheScope`.
+  - A legacy inventory result carries none of `resultType`, `ttlMs`, `cacheScope`.
+  - `tools/call` carries `resultType: "complete"` with and without `_meta`.
   - Both eras return an identical 52-tool inventory.
+
+## MCP resultType hotfix (5.1.5)
+
+- Reproduced against the 5.1.4 stdio server: modern `tools/list` included
+  `resultType`; `tools/call` for `forge_version` did not, with or without
+  `_meta`. That is the exact Claude Code schema failure.
+- After the fix, the same two `tools/call` payloads return
+  `resultType: "complete"` and no caching hints.
 - Version source gate: PASS. Eight restatements agree with
   `skyrim_forge/version.py`, and neither the workflow nor the archive builder
   hardcodes a version.

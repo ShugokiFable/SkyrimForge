@@ -305,6 +305,8 @@ def validate_mcp(errors: list[str]) -> dict[str, Any]:
         {"jsonrpc": "2.0", "id": 5, "method": "server/discover", "params": dict(modern_meta)},
         {"jsonrpc": "2.0", "id": 6, "method": "tools/list", "params": dict(modern_meta)},
         {"jsonrpc": "2.0", "id": 7, "method": "tools/list", "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "1900-01-01"}}},
+        {"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": "forge_version", "arguments": {}, **modern_meta}},
+        {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "forge_version", "arguments": {}}},
     ]
     completed = subprocess.run(
         [sys.executable, "-m", "skyrim_forge", "mcp"], cwd=ROOT,
@@ -327,6 +329,8 @@ def validate_mcp(errors: list[str]) -> dict[str, Any]:
         discover = responses[4]["result"]
         modern_tools = responses[5]["result"]
         refused = responses[6]["error"]
+        modern_call = responses[7]["result"]
+        legacy_call = responses[8]["result"]
         modern = (
             MODERN_PROTOCOL in discover["supportedVersions"]
             and discover["resultType"] == "complete"
@@ -337,8 +341,13 @@ def validate_mcp(errors: list[str]) -> dict[str, Any]:
             and len(modern_tools["tools"]) == tool_count
             # An unknown version must be refused, not silently downgraded.
             and refused["code"] == -32022 and MODERN_PROTOCOL in refused["data"]["supported"]
-            # A legacy result must not carry modern-only fields.
+            # A legacy inventory result must not carry modern-only fields.
             and not {"resultType", "ttlMs", "cacheScope"} & set(responses[1]["result"])
+            # tools/call must name its result even without `_meta`. Claude Code
+            # 2026-07-28 rejects the payload otherwise.
+            and modern_call["resultType"] == "complete" and modern_call.get("isError") is False
+            and "ttlMs" not in modern_call
+            and legacy_call["resultType"] == "complete" and legacy_call.get("isError") is False
         )
         passed = (
             completed.returncode == 0 and responses[0]["result"]["protocolVersion"] == "2025-11-25"

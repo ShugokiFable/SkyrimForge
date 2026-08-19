@@ -1,5 +1,26 @@
 # Changelog
 
+## 5.1.5
+
+Claude Code 2026-07-28 could list Forge tools and then fail every `tools/call`.
+
+- **`tools/call` never emitted `resultType`.** The 2026-07-28 schema requires
+  every complete result to name its type. Forge attached `resultType` only
+  through the list/read cache helper, so `server/discover` and `tools/list`
+  passed while `forge_doctor` / `forge_version` were rejected with
+  `missing required resultType — the absent-means-complete bridge applies only
+  to earlier-revision servers`. `tools/call`, `prompts/get`, and `ping` now
+  always carry `resultType: "complete"`. Caching hints stay on list/read.
+- **`initialize` with `protocolVersion: "2026-07-28"` now names its result.**
+  Claude still handshakes over stdio. Accepting that version and returning a
+  handshake-shaped payload left the client treating Forge as a 2026-07-28
+  server whose later calls had no `resultType`. Handshake-era `2025-*`
+  initialize responses are unchanged.
+
+Validation: `python -m unittest discover -s tests` plus
+`scripts/validate_repository.py --scope python` must PASS, including a live
+stdio `tools/call` that carries `resultType` with and without `_meta`.
+
 ## 5.1.4
 
 Encoding correctness, a test that only passed on space-free paths, and a

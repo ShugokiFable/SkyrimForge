@@ -172,6 +172,44 @@ class DualEraMcpTests(unittest.TestCase):
                 self.assertNotIn("ttlMs", result, method)
                 self.assertNotIn("cacheScope", result, method)
 
+    def test_modern_tool_call_carries_result_type(self):
+        # Claude Code 2026-07-28 rejects tools/call without resultType once the
+        # server has advertised that revision. Caching hints are list/read only.
+        with tempfile.TemporaryDirectory() as td:
+            service = self._service(td)
+            result = handle(service, self._modern("tools/call", {"name": "forge_version", "arguments": {}}))["result"]
+            self.assertEqual(result["resultType"], "complete")
+            self.assertFalse(result["isError"])
+            self.assertNotIn("ttlMs", result)
+            self.assertNotIn("cacheScope", result)
+
+    def test_tool_call_without_meta_still_carries_result_type(self):
+        # stdio clients still send initialize, then tools/call with no _meta.
+        # Advertising 2026-07-28 in discover/initialize is enough for Claude to
+        # require resultType on the call result.
+        with tempfile.TemporaryDirectory() as td:
+            service = self._service(td)
+            result = handle(service, {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                                      "params": {"name": "forge_version", "arguments": {}}})["result"]
+            self.assertEqual(result["resultType"], "complete")
+            self.assertFalse(result["isError"])
+
+    def test_initialize_modern_version_carries_result_type(self):
+        with tempfile.TemporaryDirectory() as td:
+            service = self._service(td)
+            result = handle(service, {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                                      "params": {"protocolVersion": MODERN_PROTOCOL}})["result"]
+            self.assertEqual(result["protocolVersion"], MODERN_PROTOCOL)
+            self.assertEqual(result["resultType"], "complete")
+
+    def test_legacy_initialize_keeps_handshake_shape(self):
+        with tempfile.TemporaryDirectory() as td:
+            service = self._service(td)
+            result = handle(service, {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                                      "params": {"protocolVersion": "2025-11-25"}})["result"]
+            self.assertEqual(result["protocolVersion"], "2025-11-25")
+            self.assertNotIn("resultType", result)
+
     def test_both_eras_expose_the_same_tools(self):
         with tempfile.TemporaryDirectory() as td:
             service = self._service(td)
