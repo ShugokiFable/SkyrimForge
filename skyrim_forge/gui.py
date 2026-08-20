@@ -8,12 +8,13 @@ from tkinter import filedialog, messagebox, ttk
 
 from .config import load_config
 from .service import ForgeService
+from .version import VERSION
 
 
 class ForgeGui(tk.Tk):
     def __init__(self, config_path: str | None = None):
         super().__init__()
-        self.title("Skyrim Forge 4.2 Automation Fabric")
+        self.title(f"Skyrim Forge {VERSION} Automation Fabric")
         self.geometry("1250x760")
         self.service = ForgeService(load_config(config_path))
         self._build()

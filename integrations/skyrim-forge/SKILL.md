@@ -1,9 +1,9 @@
 ---
 name: skyrim-forge
-description: Use Skyrim Forge 5.1 as the primary typed automation broker for Skyrim mod development and validation.
+description: Use Skyrim Forge 5.2 as the primary typed automation broker for Skyrim mod development and validation.
 ---
 
-# Skyrim Forge 5.1
+# Skyrim Forge 5.2
 
 ## Resolve this installation
 

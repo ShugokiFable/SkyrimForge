@@ -1,6 +1,6 @@
 # Validation
 
-## 5.1.6 layout and Grok cliff
+## 5.2.0 layout and Grok cliff
 
 - Default workspace follows `SKYRIM_FORGE_ROOT\Workspaces`; empty
   `Documents\Skyrim Forge\Workspaces` migrates. Installer registers

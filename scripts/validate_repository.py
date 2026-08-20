@@ -497,6 +497,28 @@ def validate_version_sources(errors: list[str]) -> dict[str, Any]:
     if literal:
         errors.append("scripts/build_release_archive.py hardcodes VERSION instead of deriving it")
     hardcoded = hardcoded + literal
+    # The enumerated sources above only prove that the files someone REMEMBERED
+    # to list agree. 5.2.0 shipped with `forge --help`, the GUI window title and
+    # the Go self-test fixture all still announcing the 4.2 series, because none
+    # of those three files was on the list and nothing swept for the product
+    # name in code. Enumeration cannot find what it does not enumerate, so sweep
+    # every shipped source as well: a product-name literal carrying a
+    # major.minor outside the prose and history files must name the current
+    # series, or be interpolated from VERSION.
+    stale_literals: list[str] = []
+    for path in sorted(ROOT.rglob("*")):
+        if path.suffix.lower() not in {".py", ".ps1", ".bat", ".go"} or not path.is_file():
+            continue
+        rel_parts = path.relative_to(ROOT).parts
+        if any(part in {".venv", "__pycache__", ".git", "docs"} for part in rel_parts):
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for found_series in re.findall(r"Skyrim Forge ([0-9]+\.[0-9]+)", line):
+                if found_series != series:
+                    stale_literals.append(f"{path.relative_to(ROOT).as_posix()}:{number} says {found_series}, series is {series}")
+    if stale_literals:
+        errors.append("stale product-version literal in shipped source: " + "; ".join(stale_literals))
+    hardcoded = hardcoded + stale_literals
     # Entries marked "(series)" declare major.minor only and are checked above.
     mismatched = sorted(rel for rel, value in sources.items() if not rel.endswith("(series)") and value != VERSION)
     if mismatched:

@@ -1,11 +1,42 @@
+# Changelog
+
+## 5.2.1
+
+- **`forge --help`, the GUI title and the Go self-test fixture all announced the
+  4.2 series** from inside a 5.2.0 install. The version gate only compared the
+  files someone had remembered to enumerate, and those three were not on the
+  list. All three now interpolate `VERSION`.
+- **The version gate no longer relies on enumeration alone.** It sweeps every
+  shipped `.py`, `.ps1`, `.bat` and `.go` file for a product-name literal
+  carrying a major.minor and fails on any that is not the current series.
+  Proved by reintroducing the 4.2 literal and confirming the FAIL.
+- **The install directory is documented without its version.** Providers store
+  the MCP command as an absolute path, so `Skyrim-Forge-5.2.0` renames itself
+  out from under every config on upgrade. Extract as `Skyrim-Forge`.
+- Native helpers rebuilt as 5.2.1 under the pinned Go 1.23.2 profile.
+
+## 5.2.0
+
+Compatibility and one-click integration release for Ultimate AI Starter Bundle 7.8.x.
+
+- **Machine-readable bundle handshake.** `forge bundle-contract --bundle-version X.Y.Z`
+  now proves whether this Forge build and a bundle can safely cooperate. Forge 5.2
+  accepts bundle `>=7.8.0,<8.0.0`, returns capabilities as JSON, and uses a failing
+  process exit code for an incompatible contract.
+- **Provider registration remains self-verifying.** The 5.1.7 Claude Desktop support
+  is retained alongside Claude Code, Codex, Grok, Kimi, and Hermes registration.
+- **Native helpers rebuilt as 5.2.0** under the pinned Go 1.23.2 release toolchain.
+- **Bundle-owned installation.** 7.8.0 can install this release unattended, run the
+  Forge self-test/doctor, register provider skills and MCP endpoints, then verify the
+  bundle contract before reporting success.
+
 ## 5.1.7
 
-- Claude Desktop app support: Register-MCP.ps1 detects the Claude Desktop
-  app (normal or Store install) and registers Forge's MCP server in
-  claude_desktop_config.json as well as ~/.claude.json. A desktop-only
-  machine (no claude CLI) is reported READY via the desktop config.
-
-# Changelog
+- Claude Desktop app support: `Register-MCP.ps1` detects normal and Microsoft Store
+  installs and writes `skyrim-forge` to `claude_desktop_config.json` as well as the
+  Claude Code CLI surface.
+- Repository manifest hashing follows git-normalized bytes so clean checkouts and CI
+  agree on line-ending-sensitive files.
 
 ## 5.1.6
 

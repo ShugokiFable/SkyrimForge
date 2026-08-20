@@ -1,10 +1,21 @@
+Skyrim Forge 5.2.1
+
+- forge --help, the GUI title and the Go self-test fixture announced the 4.2 series from a 5.2.0 install; all three now interpolate VERSION.
+- The version gate sweeps every shipped .py/.ps1/.bat/.go file for a stale product-name literal instead of trusting an enumerated file list.
+- Documented install directory is Skyrim-Forge with no version suffix, so an upgrade cannot rename itself out from under five provider MCP configs.
+- Native helpers rebuilt reproducibly as 5.2.1 with pinned Go 1.23.2.
+
+Skyrim Forge 5.2.0
+
+- Adds `bundle-contract --bundle-version` for a machine-readable 7.8.x compatibility handshake.
+- Keeps Claude Desktop + Claude Code MCP registration from 5.1.7.
+- Native helpers rebuilt reproducibly as 5.2.0 with pinned Go 1.23.2.
+- Designed for unattended install/doctor/registration by Ultimate AI Starter Bundle 7.8.0.
+
 Skyrim Forge 5.1.7
 
-- Claude Desktop app support: Register-MCP.ps1 now detects the Claude
-  Desktop app (normal or Microsoft Store install) and writes Forge's MCP
-  entry to claude_desktop_config.json in addition to the Claude Code CLI
-  (~/.claude.json). Desktop-only installs (no claude CLI) are reported
-  READY with the desktop config path. Skills already share ~/.claude/skills.
+- Claude Desktop app support via claude_desktop_config.json, including Store installs.
+- Manifest hashes git-normalized bytes so clean checkout CI verifies reliably.
 
 Skyrim Forge 5.1.6
 

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-const version = "5.1.7"
+const version = "5.2.1"
 
 type receipt struct {
 	Result string `json:"result"`
@@ -88,7 +88,7 @@ func selfTest() error {
 	defer os.RemoveAll(dir)
 	source := filepath.Join(dir, "input.bin")
 	target := filepath.Join(dir, "output.bin")
-	if err := os.WriteFile(source, []byte("Skyrim Forge 4.2 native self-test\n"), 0o644); err != nil {
+	if err := os.WriteFile(source, []byte("Skyrim Forge "+version+" native self-test\n"), 0o644); err != nil {
 		return err
 	}
 	r, err := atomicCopy(source, target)

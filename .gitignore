@@ -15,4 +15,3 @@ htmlcov/
 *.bak
 artifacts/
 config.toml
-dist2/
