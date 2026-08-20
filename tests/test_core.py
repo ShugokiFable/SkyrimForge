@@ -43,7 +43,7 @@ class CoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             home = root / "home"
-            install = root / "Skyrim Tools" / "Skyrim-Forge-5.1.6"
+            install = root / "Skyrim Tools" / "Skyrim-Forge-5.1.7"
             install.mkdir(parents=True)
             default_config = home / ".skyrim-forge" / "config.toml"
             with patch("pathlib.Path.home", return_value=home), \
@@ -60,7 +60,7 @@ class CoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             home = root / "home"
-            install = root / "tools" / "Skyrim-Forge-5.1.6"
+            install = root / "tools" / "Skyrim-Forge-5.1.7"
             install.mkdir(parents=True)
             legacy = home / "Documents" / "Skyrim Forge" / "Workspaces"
             legacy.mkdir(parents=True)

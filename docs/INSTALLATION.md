@@ -12,9 +12,9 @@ Forge is a Skyrim tool. The live product is a versioned folder next to xEdit
 and the rest of your tools:
 
 ```text
-<Skyrim Tools>\Skyrim-Forge-5.1.6\     live install, SKYRIM_FORGE_ROOT, MCP venv
+<Skyrim Tools>\Skyrim-Forge-5.1.7\     live install, SKYRIM_FORGE_ROOT, MCP venv
 <Skyrim Tools>\SkyrimForge\            optional git clone (source only)
-<Skyrim Tools>\Skyrim-Forge-5.1.6\Workspaces\   job staging
+<Skyrim Tools>\Skyrim-Forge-5.1.7\Workspaces\   job staging
 ```
 
 Never:

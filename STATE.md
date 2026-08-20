@@ -1,6 +1,6 @@
 # State
 
-- Active version: 5.1.6
+- Active version: 5.1.7
 - Parent: v5.1.5 at 1e9f645
 - Authoritative owner: `https://github.com/ShugokiFable/SkyrimForge`, branch
   `main`

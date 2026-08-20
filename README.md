@@ -1,4 +1,4 @@
-# Skyrim Forge 5.1.6
+# Skyrim Forge 5.1.7
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
@@ -25,7 +25,7 @@ The gate maps every bundled file to its origin, author, licence or permission ba
 ## Install
 
 1. Extract the release into your **Skyrim tools folder** as
-   `Skyrim-Forge-5.1.6` (same directory as xEdit, houseCARL, Spooky, …).
+   `Skyrim-Forge-5.1.7` (same directory as xEdit, houseCARL, Spooky, …).
    Do not clone or extract into `Documents`. Do not keep a second copy.
 2. Run `START-HERE.bat`.
 3. Choose **Install/update Forge and connect all detected AI apps**.

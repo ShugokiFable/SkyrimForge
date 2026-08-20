@@ -64,10 +64,55 @@ function Test-GrokForgeRegistrationAllowed {
     return $true
 }
 
+function Get-ClaudeDesktopConfigPath {
+    # Claude Desktop app ships as either a normal install (%APPDATA%\Claude)
+    # or a Microsoft Store package (LocalCache\Roaming\Claude). Return the
+    # live claude_desktop_config.json, or $null when the app is absent.
+    $Normal = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'Claude\claude_desktop_config.json'
+    if (Test-Path -LiteralPath $Normal -PathType Leaf) { return $Normal }
+    $Store = Get-ChildItem -LiteralPath (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Packages') -Directory -Filter 'Claude_*' -ErrorAction SilentlyContinue |
+        ForEach-Object { Join-Path $_.FullName 'LocalCache\Roaming\Claude\claude_desktop_config.json' } |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        Select-Object -First 1
+    return $Store
+}
+
+function Write-ClaudeDesktopMcp {
+    # Merge one MCP entry into claude_desktop_config.json (desktop schema:
+    # command/args/env, no 'type'). Backs up the original and restores it on
+    # any failed write so the app's preferences are never corrupted.
+    param([string]$ConfigPath, [string]$Name, [hashtable]$Entry)
+    $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $Original = if (Test-Path -LiteralPath $ConfigPath -PathType Leaf) { [IO.File]::ReadAllBytes($ConfigPath) } else { $null }
+    $Config = if ($Original) { [IO.File]::ReadAllText($ConfigPath) | ConvertFrom-Json } else { [pscustomobject]@{} }
+    if (-not $Config.PSObject.Properties['mcpServers']) {
+        $Config | Add-Member -MemberType NoteProperty -Name mcpServers -Value ([pscustomobject]@{})
+    }
+    if ($null -eq $Config.mcpServers -or -not ($Config.mcpServers -is [psobject])) {
+        throw 'Claude desktop config mcpServers must be an object.'
+    }
+    $Clean = [ordered]@{}
+    foreach ($Key in @('command', 'args', 'env')) { if ($Entry.ContainsKey($Key)) { $Clean[$Key] = $Entry[$Key] } }
+    $Config.mcpServers | Add-Member -MemberType NoteProperty -Name $Name -Value ([pscustomobject]$Clean) -Force
+    try {
+        [IO.File]::WriteAllText($ConfigPath, ($Config | ConvertTo-Json -Depth 32) + [Environment]::NewLine, $Utf8NoBom)
+    } catch {
+        if ($Original) { [IO.File]::WriteAllBytes($ConfigPath, $Original) } elseif (Test-Path -LiteralPath $ConfigPath) { Remove-Item -LiteralPath $ConfigPath -Force }
+        throw
+    }
+    $Verified = [IO.File]::ReadAllText($ConfigPath) | ConvertFrom-Json
+    $Got = $Verified.mcpServers.PSObject.Properties[$Name]
+    if (-not $Got -or $Got.Value.command -ne $Entry['command']) { throw 'Claude desktop MCP verification failed.' }
+    return $true
+}
+
 function Invoke-Registration {
     param([string]$Name)
     $Executable = Resolve-ProviderCommand -Name $Name
-    if (-not $Executable) {
+    # Claude Desktop app has no CLI on PATH. Detect its config so a
+    # desktop-only install still gets Forge registered.
+    $DesktopCfg = if ($Name -eq 'Claude') { Get-ClaudeDesktopConfigPath } else { $null }
+    if (-not $Executable -and -not $DesktopCfg) {
         return [ordered]@{
             provider = $Name
             mode = 'mcp'
@@ -95,9 +140,16 @@ function Invoke-Registration {
                 if ($LASTEXITCODE -ne 0) { throw "Codex verification exited $LASTEXITCODE." }
             }
             'Claude' {
-                & $Executable mcp remove skyrim-forge -s user 2>$null | Out-Null
-                & $Executable mcp add --transport stdio --scope user skyrim-forge -- $Python -m skyrim_forge mcp | Out-Null
-                if ($LASTEXITCODE -ne 0) { throw "Claude registration exited $LASTEXITCODE." }
+                if ($Executable) {
+                    # Claude Code CLI surface (~/.claude.json)
+                    & $Executable mcp remove skyrim-forge -s user 2>$null | Out-Null
+                    & $Executable mcp add --transport stdio --scope user skyrim-forge -- $Python -m skyrim_forge mcp | Out-Null
+                    if ($LASTEXITCODE -ne 0) { throw "Claude registration exited $LASTEXITCODE." }
+                }
+                if ($DesktopCfg) {
+                    # Claude Desktop app surface (claude_desktop_config.json)
+                    [void](Write-ClaudeDesktopMcp -ConfigPath $DesktopCfg -Name 'skyrim-forge' -Entry @{ command = $Python; args = @('-m', 'skyrim_forge', 'mcp') })
+                }
             }
             'Grok' {
                 if (-not (Test-GrokForgeRegistrationAllowed)) {
@@ -204,8 +256,14 @@ function Invoke-Registration {
             provider = $Name
             mode = 'mcp'
             status = 'READY'
-            command = $Executable
-            detail = 'MCP registration and provider verification passed.'
+            command = if ($Executable) { $Executable } elseif ($DesktopCfg) { $DesktopCfg } else { $null }
+            detail = if ($Executable -and $DesktopCfg) {
+                'MCP registered with Claude Code CLI and Claude Desktop app; verification passed.'
+            } elseif ($DesktopCfg) {
+                'Claude Desktop app detected (no CLI); MCP written to claude_desktop_config.json and verified.'
+            } else {
+                'MCP registration and provider verification passed.'
+            }
         }
     } catch {
         return [ordered]@{

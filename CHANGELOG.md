@@ -1,3 +1,10 @@
+## 5.1.7
+
+- Claude Desktop app support: Register-MCP.ps1 detects the Claude Desktop
+  app (normal or Store install) and registers Forge's MCP server in
+  claude_desktop_config.json as well as ~/.claude.json. A desktop-only
+  machine (no claude CLI) is reported READY via the desktop config.
+
 # Changelog
 
 ## 5.1.6

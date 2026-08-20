@@ -1,3 +1,11 @@
+Skyrim Forge 5.1.7
+
+- Claude Desktop app support: Register-MCP.ps1 now detects the Claude
+  Desktop app (normal or Microsoft Store install) and writes Forge's MCP
+  entry to claude_desktop_config.json in addition to the Claude Code CLI
+  (~/.claude.json). Desktop-only installs (no claude CLI) are reported
+  READY with the desktop config path. Skills already share ~/.claude/skills.
+
 Skyrim Forge 5.1.6
 
 - Default workspace is SKYRIM_FORGE_ROOT\Workspaces, not Documents\Skyrim Forge.
