@@ -122,6 +122,18 @@
     },
     {
       "executable": false,
+      "path": "dist2/skyrim_forge-5.1.7-py3-none-any.whl",
+      "sha256": "3edf4b0f6ea7889fd2f123d0a0ba2b8273979657a9a5d8da6646ed5cf9c59da9",
+      "size": 1844983
+    },
+    {
+      "executable": false,
+      "path": "dist3/skyrim_forge-5.1.7.tar.gz",
+      "sha256": "e0ee06243cc72f43724f527f6fe648bb1f68e756e2e3617451861118df3e2c3f",
+      "size": 5448027
+    },
+    {
+      "executable": false,
       "path": "docs/AI-INTEGRATION.md",
       "sha256": "9582af0848367d5f1785eee3cb93df192633841ee63480c30a98209c673439a6",
       "size": 1680

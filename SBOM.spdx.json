@@ -310,6 +310,36 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-File-dist2-skyrim-forge-5.1.7-py3-none-any.whl",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3edf4b0f6ea7889fd2f123d0a0ba2b8273979657a9a5d8da6646ed5cf9c59da9"
+        }
+      ],
+      "copyrightText": "NOASSERTION",
+      "fileName": "./dist2/skyrim_forge-5.1.7-py3-none-any.whl",
+      "licenseConcluded": "NOASSERTION",
+      "licenseInfoInFiles": [
+        "NOASSERTION"
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-dist3-skyrim-forge-5.1.7.tar.gz",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e0ee06243cc72f43724f527f6fe648bb1f68e756e2e3617451861118df3e2c3f"
+        }
+      ],
+      "copyrightText": "NOASSERTION",
+      "fileName": "./dist3/skyrim_forge-5.1.7.tar.gz",
+      "licenseConcluded": "NOASSERTION",
+      "licenseInfoInFiles": [
+        "NOASSERTION"
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-File-docs-AI-INTEGRATION.md",
       "checksums": [
         {
