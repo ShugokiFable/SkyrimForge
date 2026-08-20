@@ -164,7 +164,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "b7789749ab46c99e1351f728a6d5300cdc1224d0cf9c81d02b5ece2c39323544"
+          "checksumValue": "11d43dffc07f8e8561cc64f80b8e867e0c5fd9ad36eeed4b5ae3d5bc019f97ca"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -179,7 +179,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "845ca62ece30d6f68f2e3f78a273fe3ebacbd595ecddc70aadfb80726f771082"
+          "checksumValue": "07044d78f9818cf7e4687782bde731ef687f22d412584e94e7f7639b67b7a115"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -319,21 +319,6 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./dist2/skyrim_forge-5.1.7-py3-none-any.whl",
-      "licenseConcluded": "NOASSERTION",
-      "licenseInfoInFiles": [
-        "NOASSERTION"
-      ]
-    },
-    {
-      "SPDXID": "SPDXRef-File-dist3-skyrim-forge-5.1.7.tar.gz",
-      "checksums": [
-        {
-          "algorithm": "SHA256",
-          "checksumValue": "e0ee06243cc72f43724f527f6fe648bb1f68e756e2e3617451861118df3e2c3f"
-        }
-      ],
-      "copyrightText": "NOASSERTION",
-      "fileName": "./dist3/skyrim_forge-5.1.7.tar.gz",
       "licenseConcluded": "NOASSERTION",
       "licenseInfoInFiles": [
         "NOASSERTION"
@@ -1214,7 +1199,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "b2390036153f4dfdaebe16d34e73d2af2744f006b96607bbd8bd359d987b0f90"
+          "checksumValue": "e4f508b101dd2e0bc4c997b81fd08d18909e1d9e1186e9bf57946186145ffa2d"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -3179,7 +3164,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f7bea7438a08e7c0eb2bded52e51f61200fc353a91169086b6c2e6e5ecb7af83"
+          "checksumValue": "b795bccb8ce082767ebfa321a17469d7083192dbd3e79a0689510e5d4bdb3d92"
         }
       ],
       "copyrightText": "NOASSERTION",

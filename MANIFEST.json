@@ -63,14 +63,14 @@
     {
       "executable": false,
       "path": "CHANGELOG.md",
-      "sha256": "b7789749ab46c99e1351f728a6d5300cdc1224d0cf9c81d02b5ece2c39323544",
-      "size": 25869
+      "sha256": "11d43dffc07f8e8561cc64f80b8e867e0c5fd9ad36eeed4b5ae3d5bc019f97ca",
+      "size": 25479
     },
     {
       "executable": false,
       "path": "CHANGELOG.txt",
-      "sha256": "845ca62ece30d6f68f2e3f78a273fe3ebacbd595ecddc70aadfb80726f771082",
-      "size": 6818
+      "sha256": "07044d78f9818cf7e4687782bde731ef687f22d412584e94e7f7639b67b7a115",
+      "size": 6683
     },
     {
       "executable": false,
@@ -125,12 +125,6 @@
       "path": "dist2/skyrim_forge-5.1.7-py3-none-any.whl",
       "sha256": "3edf4b0f6ea7889fd2f123d0a0ba2b8273979657a9a5d8da6646ed5cf9c59da9",
       "size": 1844983
-    },
-    {
-      "executable": false,
-      "path": "dist3/skyrim_forge-5.1.7.tar.gz",
-      "sha256": "e0ee06243cc72f43724f527f6fe648bb1f68e756e2e3617451861118df3e2c3f",
-      "size": 5448027
     },
     {
       "executable": false,
@@ -483,8 +477,8 @@
     {
       "executable": false,
       "path": "README.md",
-      "sha256": "b2390036153f4dfdaebe16d34e73d2af2744f006b96607bbd8bd359d987b0f90",
-      "size": 13004
+      "sha256": "e4f508b101dd2e0bc4c997b81fd08d18909e1d9e1186e9bf57946186145ffa2d",
+      "size": 12804
     },
     {
       "executable": false,
@@ -1269,8 +1263,8 @@
     {
       "executable": false,
       "path": "WORKSPACE_OWNERSHIP.md",
-      "sha256": "f7bea7438a08e7c0eb2bded52e51f61200fc353a91169086b6c2e6e5ecb7af83",
-      "size": 743
+      "sha256": "b795bccb8ce082767ebfa321a17469d7083192dbd3e79a0689510e5d4bdb3d92",
+      "size": 725
     },
     {
       "executable": false,
