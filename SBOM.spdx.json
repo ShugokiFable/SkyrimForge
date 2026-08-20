@@ -149,7 +149,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8d1fbc52fb1ea66c69cbbd7ae68e28f256bad4d2b3529b1a58065692ba9b2a09"
+          "checksumValue": "02fb0c3429fd546ba1e0a2b3b2237d6c9270ae34c3d1c15b3dc53baffd846afa"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -304,21 +304,6 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./DECISIONS.md",
-      "licenseConcluded": "NOASSERTION",
-      "licenseInfoInFiles": [
-        "NOASSERTION"
-      ]
-    },
-    {
-      "SPDXID": "SPDXRef-File-dist2-skyrim-forge-5.1.7-py3-none-any.whl",
-      "checksums": [
-        {
-          "algorithm": "SHA256",
-          "checksumValue": "3edf4b0f6ea7889fd2f123d0a0ba2b8273979657a9a5d8da6646ed5cf9c59da9"
-        }
-      ],
-      "copyrightText": "NOASSERTION",
-      "fileName": "./dist2/skyrim_forge-5.1.7-py3-none-any.whl",
       "licenseConcluded": "NOASSERTION",
       "licenseInfoInFiles": [
         "NOASSERTION"
@@ -1574,7 +1559,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9baa6b13b41a76ccee5e90be4aad0e5eed48b72cd90c0d36198775a007e07f6a"
+          "checksumValue": "f8785f539122e2be958cc3a096c1610a7c64b44f3fe7e60896d94dd72962e840"
         }
       ],
       "copyrightText": "NOASSERTION",

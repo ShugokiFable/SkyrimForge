@@ -57,8 +57,8 @@
     {
       "executable": false,
       "path": ".gitignore",
-      "sha256": "8d1fbc52fb1ea66c69cbbd7ae68e28f256bad4d2b3529b1a58065692ba9b2a09",
-      "size": 168
+      "sha256": "02fb0c3429fd546ba1e0a2b3b2237d6c9270ae34c3d1c15b3dc53baffd846afa",
+      "size": 175
     },
     {
       "executable": false,
@@ -119,12 +119,6 @@
       "path": "DECISIONS.md",
       "sha256": "650f9e420377515cfd9b93e2a1ed35299fe3d41de9936cf52e105d787e04ff5a",
       "size": 3792
-    },
-    {
-      "executable": false,
-      "path": "dist2/skyrim_forge-5.1.7-py3-none-any.whl",
-      "sha256": "3edf4b0f6ea7889fd2f123d0a0ba2b8273979657a9a5d8da6646ed5cf9c59da9",
-      "size": 1844983
     },
     {
       "executable": false,
@@ -627,8 +621,8 @@
     {
       "executable": false,
       "path": "scripts/validate_repository.py",
-      "sha256": "9baa6b13b41a76ccee5e90be4aad0e5eed48b72cd90c0d36198775a007e07f6a",
-      "size": 35272
+      "sha256": "f8785f539122e2be958cc3a096c1610a7c64b44f3fe7e60896d94dd72962e840",
+      "size": 36077
     },
     {
       "executable": false,

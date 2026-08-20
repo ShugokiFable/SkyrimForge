@@ -67,10 +67,13 @@ REPORTS = {"VALIDATION.json", "BUILD-RECEIPT.json", "MANIFEST.json", "SBOM.spdx.
 TEXT_SUFFIXES = {".py", ".go", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".xml", ".ps1", ".bat", ".pas", ".cff"}
 
 
-def sha256(path: Path) -> str:
+def sha256(data: "Path | bytes") -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024): digest.update(chunk)
+    if isinstance(data, bytes):
+        digest.update(data)
+    else:
+        with data.open("rb") as stream:
+            while chunk := stream.read(1024 * 1024): digest.update(chunk)
     return digest.hexdigest()
 
 
@@ -407,8 +410,26 @@ def portable(value: Any) -> Any:
     return value
 
 
+BINARY_SUFFIXES = {".exe", ".dll", ".esp", ".esm", ".esl", ".pex", ".nif", ".dds", ".zip"}
+
+
+def git_normalized(path: Path) -> bytes:
+    """Return the bytes git would store for this file, so manifests match CI.
+
+    .ps1/.bat are CRLF-forced and binary files are untouched by .gitattributes;
+    all other text is stored LF.  Binaries are detected by magic bytes, not
+    suffix (e.g. the suffix-less Linux ELF helper).
+    """
+    b = path.read_bytes()
+    if b"\r\n" not in b or path.suffix.lower() in {".ps1", ".bat"} | BINARY_SUFFIXES:
+        return b
+    if b[:4] == b"\x7fELF" or b[:2] == b"MZ" or b"\x00" in b[:1024]:
+        return b
+    return b.replace(b"\r\n", b"\n")
+
+
 def manifest() -> dict[str, Any]:
-    return {"product":"Skyrim Forge","version":VERSION,"files":[{"path":p.relative_to(ROOT).as_posix(),"size":p.stat().st_size,"sha256":sha256(p),"executable":bool(p.stat().st_mode & 0o111)} for p in repository_files()]}
+    return {"product": "Skyrim Forge", "version": VERSION, "files": [{"path": p.relative_to(ROOT).as_posix(), "size": len(git_normalized(p)), "sha256": sha256(git_normalized(p)), "executable": bool(p.stat().st_mode & 0o111)} for p in repository_files()]}
 
 
 def write_reports(report: dict[str, Any]) -> None:
