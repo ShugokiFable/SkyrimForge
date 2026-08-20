@@ -1,5 +1,35 @@
 # Skyrim Forge 5.2.1
 
+> ## Development has moved
+>
+> Skyrim Forge is now developed inside the **Ultimate AI Starter Bundle**, at
+> [`BUNDLED-TOOLS/skyrim-forge`](https://github.com/ShugokiFable/Ultimate-AI-Starter-Bundle/tree/main/BUNDLED-TOOLS/skyrim-forge).
+> This repository is frozen at **5.2.1**, its last standalone release.
+>
+> **Why.** The bundle installs Forge, and the two lived in separate
+> repositories. Bundle 7.8.0 shipped an installer that read a field Forge has
+> never emitted, so the Forge step threw on every run and aborted the whole
+> install — with every gate green in both repositories, because no commit could
+> test both halves. Two files that must agree do not belong in two repositories
+> on two release schedules. Merged, one commit proves both.
+>
+> **Where Forge is now.** Forge **6.0.0** and later ship inside the bundle:
+> [Ultimate-AI-Starter-Bundle releases](https://github.com/ShugokiFable/Ultimate-AI-Starter-Bundle/releases).
+> Run `START-HERE.bat`, or install Forge alone with
+> `TOOLS\Install-SkyrimForge.ps1 -ForgeRoot 'S:\Apps\Skyrim Tools\Skyrim-Forge'`.
+> Its source is a normal directory in that repository — read it, edit it, build
+> it, with no submodule and no download step.
+>
+> **If you are on 5.2.1.** It keeps working; nothing here was withdrawn, and the
+> [v5.2.1 release](https://github.com/ShugokiFable/SkyrimForge/releases/tag/v5.2.1)
+> stays downloadable. Upgrading is a normal install: the bundle's installer
+> migrates a version-stamped `Skyrim-Forge-5.2.1` folder onto the versionless
+> `Skyrim-Forge` name and preserves `Workspaces`, `.venv`, `REPORTS` and a local
+> `config.toml`. 6.0.0 removes the `forge bundle-contract` command, which existed
+> only to negotiate across the repository split this notice is about.
+>
+> Everything below describes 5.2.1 and is kept as-is for that release.
+
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
 
 Forge 5.0 speaks the current **MCP `2026-07-28`** revision, which replaced the
