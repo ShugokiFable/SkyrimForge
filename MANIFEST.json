@@ -45,7 +45,7 @@
     {
       "executable": false,
       "path": ".github/workflows/codeql.yml",
-      "sha256": "e583f92372898c3e3f3b74c11acde91fed384dc61e50ed7bd72c73b4e4bb3b2c",
+      "sha256": "9bb18ddea813430d8c0bc134f33ea12b9632eee23a761e0715b4a817069c171f",
       "size": 722
     },
     {
