@@ -28,6 +28,14 @@
 > `config.toml`. 6.0.0 removes the `forge bundle-contract` command, which existed
 > only to negotiate across the repository split this notice is about.
 >
+> **Support for this repository has been dropped.** 5.2.1 is not maintained:
+> no fixes, no releases, no patch versions. Issues and pull requests opened
+> here will be closed with a pointer rather than worked on. Report anything
+> against Forge in the bundle instead —
+> [Ultimate-AI-Starter-Bundle/issues](https://github.com/ShugokiFable/Ultimate-AI-Starter-Bundle/issues).
+> The code stays public and the release stays downloadable; only the
+> maintenance stops.
+>
 > Everything below describes 5.2.1 and is kept as-is for that release.
 
 Skyrim Forge is a local, safety-first engineering workbench and MCP server for Skyrim Special Edition and Anniversary Edition mod development.
