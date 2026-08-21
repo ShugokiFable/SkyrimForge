@@ -621,8 +621,8 @@
     {
       "executable": false,
       "path": "scripts/validate_repository.py",
-      "sha256": "5897c907e850a4bdcd3cb188e24eac10a9ff076ac4c79c7925b2329e58179205",
-      "size": 37549
+      "sha256": "4100f11875a294f4cb8323e3cc18238e9c40037fdbcc91bb2c1180b2bbafc50b",
+      "size": 37551
     },
     {
       "executable": false,
@@ -1209,8 +1209,8 @@
     {
       "executable": false,
       "path": "tests/test_powershell_release.py",
-      "sha256": "152facd7793a027f526dbc3f7a4d4f8d59e0c2879e133dc7de8fd837c804dcdb",
-      "size": 7716
+      "sha256": "7a401cd7d24bb873b8ec54be56c9f1cb6d65ad1f8eabda5153ba0fe8100b5e6e",
+      "size": 7717
     },
     {
       "executable": false,
